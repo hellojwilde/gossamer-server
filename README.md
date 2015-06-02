@@ -5,7 +5,7 @@ A centralized place for easily installable browser experiments.
 ## Prerequisites
 
 - Node
-- Nodemon - installed via `npm install -g nodemon` such that it's accessible from shell by calling `nodemon`
+- Nodemon - installed via `npm install -g nodemon`
 - Redis - running on `127.0.0.1:6379`
 
 ## Installation
