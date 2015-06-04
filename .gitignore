@@ -28,3 +28,6 @@ node_modules
 
 # Our configuration with private keys and the like
 config.js
+
+# The awful Mac OS X thumbnail file
+.DS_Store

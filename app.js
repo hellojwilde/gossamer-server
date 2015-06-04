@@ -12,7 +12,7 @@ var Redis = require('ioredis');
 
 var config = require('./config');
 var routes = require('./routes/index');
-var users = require('./routes/users');
+var user = require('./routes/user');
 
 var app = express();
 var redis = new Redis();
@@ -73,7 +73,7 @@ app.use(passport.session());
 // login setup
 
 app.use('/', routes);
-app.use('/user', users);
+app.use('/user', user);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

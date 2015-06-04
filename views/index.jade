@@ -1,5 +1,19 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  .full-page
+    .vertical-center
+      .vertical-center-inner
+        .placeholder
+          .placeholder-icon
+            span.glyphicon.glyphicon-dashboard
+          .placeholder-main
+            p.lead Gossamer makes it easy to rapidly test experimental web browser features.
+            ul
+              li Deploy experimental features to users.
+              li Receive real-time metrics on usage and errors.
+              li Show your verification status in <a href="http://mozillians.org">mozillians.org</a> to build trust.
+            p Ready to get started?
+            a.btn.btn-lg.btn-default.btn-primary.btn-block.placeholder-main-btn(
+              href='/user/oauth'
+            ) Log in with GitHub
