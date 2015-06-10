@@ -6,6 +6,10 @@
   bottom: 0;
 }
 
+.with-fixed-header {
+  margin-top: 55px;
+}
+
 .vertical-center {
   width: 100%;
   height: 100%;
@@ -15,22 +19,6 @@
 .vertical-center-inner {
   display: table-cell;
   vertical-align: middle;
-}
-
-.placeholder {
-  margin: 0 auto;
-  max-width: 400px;
-}
-
-.placeholder-icon {
-  text-align: center;
-  font-size: 60px;
-}
-
-.placeholder-main {
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 15px 20px;
 }
 
 .placeholder-main-btn {
@@ -50,9 +38,4 @@
 
 .navbar-user-voucher {
   margin-left: 0 !important;
-}
-
-.with-fixed-header {
-  margin-top: 55px;
-  max-width: 400px;
 }

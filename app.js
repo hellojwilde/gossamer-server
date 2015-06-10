@@ -1,13 +1,14 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var passport = require('passport');
-var session = require('express-session');
+var cookieParser = require('cookie-parser');
+var express = require('express');
+var expressValidator = require('express-validator');
+var favicon = require('serve-favicon');
 var fetch = require('node-fetch');
+var logger = require('morgan');
+var passport = require('passport');
+var path = require('path');
 var querystring = require('querystring');
+var session = require('express-session');
 
 var GithubStrategy = require('passport-github').Strategy;
 var GithubApi = require('github');
@@ -120,6 +121,7 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
