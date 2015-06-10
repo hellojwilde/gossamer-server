@@ -1,80 +1,37 @@
 var bodyParser = require('body-parser');
+var config = require('./config');
 var cookieParser = require('cookie-parser');
 var express = require('express');
 var expressValidator = require('express-validator');
 var favicon = require('serve-favicon');
-var fetch = require('node-fetch');
 var logger = require('morgan');
 var passport = require('passport');
 var path = require('path');
-var querystring = require('querystring');
+var routes = require('./routes/index');
 var session = require('express-session');
+var userRoutes = require('./routes/user');
+var assign = require('lodash.assign');
+var isGitHubUserVouched = require('./helpers/isGitHubUserVouched');
 
 var GithubStrategy = require('passport-github').Strategy;
 var GithubApi = require('github');
 var Redis = require('ioredis');
 var Promise = require('bluebird');
-
-var config = require('./config');
-var routes = require('./routes/index');
-var user = require('./routes/user');
+var Model = require('./model');
 
 var app = express();
 var redis = new Redis();
 var github = new GithubApi({version: '3.0.0'});
+var model = new Model(redis);
 
-// github+mozillians vouching
-
-function isGitHubUserVouchedOnMozillians(accessToken) {
-  return Promise.map(
-    getGitHubVerifiedEmails(accessToken),
-    isEmailVouchedOnMozillians
-  ).then(function(vouches) {
-    return vouches.indexOf(true) !== -1;
-  });
-}
-
-function getGitHubVerifiedEmails(accessToken) {
-  return new Promise(function(resolve, reject) {
-    github.authenticate({type: 'oauth', token: accessToken});
-    github.user.getEmails({}, function(err, result) {
-      if (err) {
-        reject(err);
-      }
-
-      resolve(
-        result
-          .filter(function(address) {return address.verified === true})
-          .map(function(address) {return address.email})
-      );
-    })
-  });
-}
-
-function isEmailVouchedOnMozillians(email) {
-  var url = (
-    'https://mozillians.org/api/v2/users/?' +
-    querystring.stringify({
-      'api-key': config.mozilliansApiKey, 
-      'email': email, 
-      'is_vouched': 'true'
-    })
-  );
-
-  return fetch(url).then(function(res) {
-    return res.json().then(function(parsed) {
-      return parsed && parsed.count && parsed.count > 0;
-    });
-  }); 
+function doneify(promised, done) {
+  promised.then(
+    function(returnValue) {done(null, returnValue)},
+    function(err) {done(err)}
+  ) 
 }
 
 // authentication setup
-
-function getUserKey(id, optSuffix) {
-  var path = ['gos', 'user', id];
-  optSuffix && path.push(optSuffix);
-  return path.join(':');
-}
 
 passport.use(new GithubStrategy(
   {
@@ -83,15 +40,13 @@ passport.use(new GithubStrategy(
     callbackURL: config.githubCallbackUrl
   },
   function(accessToken, _refreshToken, profile, done) {
-    isGitHubUserVouchedOnMozillians(accessToken).then(function(isVouched) {
-      redis.multi()
-        .set(getUserKey(profile.id, 'accessToken'), accessToken)
-        .set(getUserKey(profile.id, 'isVouched'), isVouched)
-        .set(getUserKey(profile.id), JSON.stringify(profile))
-        .exec(function(err, results) {
-          done(err, profile);
-        });
-    });
+    doneify(
+      isGitHubUserVouched(github, accessToken)
+        .then(function(isVouched) { 
+          return model.putUser(profile, accessToken, isVouched)
+        }),
+      done
+    );
   }
 ));
 
@@ -100,16 +55,7 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(id, done) {
-  Promise.props({
-    profile: redis.get(getUserKey(id)),
-    isVouched: redis.get(getUserKey(id, 'isVouched'))
-  })
-    .then(function(user) {
-      var parsed = JSON.parse(user.profile);
-      parsed.isVouched = user.isVouched;
-      done(null, parsed);
-    })
-    .catch(function(err) {done(err)});
+  doneify(model.getUserById(id), done);
 });
 
 // view engine setup
@@ -127,15 +73,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   resave: false,
   saveUninitialized: false,
-  secret: 'keyboard cat'
+  secret: config.sessionSecret
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// login setup
-
+// routes setup
 app.use('/', routes);
-app.use('/user', user);
+app.use('/user', userRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
