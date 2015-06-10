@@ -37,10 +37,19 @@
   margin-top: 20px;
 }
 
-.navbar-avatar {
+.navbar-user-avatar {
   width: 30px;
   height: 30px;
   margin: 10px 0;
+}
+
+.navbar-user-name a {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+.navbar-user-voucher {
+  margin-left: 0 !important;
 }
 
 .with-fixed-header {

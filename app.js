@@ -6,9 +6,13 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var passport = require('passport');
 var session = require('express-session');
+var fetch = require('node-fetch');
+var querystring = require('querystring');
 
 var GithubStrategy = require('passport-github').Strategy;
+var GithubApi = require('github');
 var Redis = require('ioredis');
+var Promise = require('bluebird');
 
 var config = require('./config');
 var routes = require('./routes/index');
@@ -16,8 +20,55 @@ var user = require('./routes/user');
 
 var app = express();
 var redis = new Redis();
+var github = new GithubApi({version: '3.0.0'});
+
+// github+mozillians vouching
+
+function isGitHubUserVouchedOnMozillians(accessToken) {
+  return Promise.map(
+    getGitHubVerifiedEmails(accessToken),
+    isEmailVouchedOnMozillians
+  ).then(function(vouches) {
+    return vouches.indexOf(true) !== -1;
+  });
+}
+
+function getGitHubVerifiedEmails(accessToken) {
+  return new Promise(function(resolve, reject) {
+    github.authenticate({type: 'oauth', token: accessToken});
+    github.user.getEmails({}, function(err, result) {
+      if (err) {
+        reject(err);
+      }
+
+      resolve(
+        result
+          .filter(function(address) {return address.verified === true})
+          .map(function(address) {return address.email})
+      );
+    })
+  });
+}
+
+function isEmailVouchedOnMozillians(email) {
+  var url = (
+    'https://mozillians.org/api/v2/users/?' +
+    querystring.stringify({
+      'api-key': config.mozilliansApiKey, 
+      'email': email, 
+      'is_vouched': 'true'
+    })
+  );
+
+  return fetch(url).then(function(res) {
+    return res.json().then(function(parsed) {
+      return parsed && parsed.count && parsed.count > 0;
+    });
+  }); 
+}
 
 // authentication setup
+
 function getUserKey(id, optSuffix) {
   var path = ['gos', 'user', id];
   optSuffix && path.push(optSuffix);
@@ -30,14 +81,16 @@ passport.use(new GithubStrategy(
     clientSecret: config.githubClientSecret,
     callbackURL: config.githubCallbackUrl
   },
-  function(accessToken, refreshToken, profile, done) {
-    redis.multi()
-      .set(getUserKey(profile.id, 'accessToken'), accessToken)
-      .set(getUserKey(profile.id, 'refreshToken'), refreshToken)
-      .set(getUserKey(profile.id), JSON.stringify(profile))
-      .exec(function(err, results) {
-        done(err, profile);
-      });
+  function(accessToken, _refreshToken, profile, done) {
+    isGitHubUserVouchedOnMozillians(accessToken).then(function(isVouched) {
+      redis.multi()
+        .set(getUserKey(profile.id, 'accessToken'), accessToken)
+        .set(getUserKey(profile.id, 'isVouched'), isVouched)
+        .set(getUserKey(profile.id), JSON.stringify(profile))
+        .exec(function(err, results) {
+          done(err, profile);
+        });
+    });
   }
 ));
 
@@ -46,9 +99,16 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(id, done) {
-  redis.get(getUserKey(id), function(err, user) {
-    done(err, JSON.parse(user));
-  });
+  Promise.props({
+    profile: redis.get(getUserKey(id)),
+    isVouched: redis.get(getUserKey(id, 'isVouched'))
+  })
+    .then(function(user) {
+      var parsed = JSON.parse(user.profile);
+      parsed.isVouched = user.isVouched;
+      done(null, parsed);
+    })
+    .catch(function(err) {done(err)});
 });
 
 // view engine setup

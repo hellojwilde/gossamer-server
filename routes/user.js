@@ -16,7 +16,7 @@ router.get('/logout', function(req, res) {
 });
 
 /* GET authenticate */
-router.get('/oauth', passport.authenticate('github'));
+router.get('/oauth', passport.authenticate('github', {scope: ['user:email']}));
 
 /* GET resolve final authentication details */
 router.get('/oauth/callback', passport.authenticate('github', {

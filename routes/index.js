@@ -10,6 +10,10 @@ router.get('/', function(req, res, next) {
     return;
   }
 
+  // todo: request a list of experiments
+  // todo: determine whether or not we need to show the verifications status 
+  // thingy
+  
   renderWithDefaults(req, res, 'experiments');
 });
 

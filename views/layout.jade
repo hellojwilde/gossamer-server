@@ -24,8 +24,18 @@ html(lang='en')
           ul.nav.navbar-nav.navbar-right
             if isAuthenticated
               li
-                img.navbar-avatar.img-circle(src=user._json.avatar_url, alt='Avatar')
-              li.navbar-text= user.displayName
+                img.navbar-user-avatar.img-circle(
+                  src=user._json.avatar_url, 
+                  alt='Avatar'
+                )
+              li.navbar-user-name
+                a(href=user.profileUrl)
+                  =user.displayName
+              li.navbar-text.navbar-user-voucher
+                if user.isVouched
+                  span.glyphicon.glyphicon-ok-sign
+                else
+                  span.glyphicon.glyphicon-question-sign
               li
                 a(href='/user/logout') Log out
             else
