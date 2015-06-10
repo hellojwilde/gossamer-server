@@ -7,7 +7,6 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var passport = require('passport');
 var path = require('path');
-var routes = require('./routes/index');
 var session = require('express-session');
 var userRoutes = require('./routes/user');
 var assign = require('lodash.assign');
@@ -18,6 +17,7 @@ var GithubApi = require('github');
 var Redis = require('ioredis');
 var Promise = require('bluebird');
 var Model = require('./model');
+var IndexRoutes = require('./routes/IndexRoutes');
 
 var app = express();
 var redis = new Redis();
@@ -79,7 +79,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // routes setup
-app.use('/', routes);
+app.use('/', new IndexRoutes(model).router);
 app.use('/user', userRoutes);
 
 // catch 404 and forward to error handler

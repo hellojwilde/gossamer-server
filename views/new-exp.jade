@@ -19,11 +19,11 @@ block content
                         each error in errors
                           p= error.msg
                     .form-group
-                      label(for='title') Title
-                      input.form-control(type='text', name='title', value=title)
+                      label(for='titleField') Title
+                      input.form-control(type='text', name='titleField', value=titleField)
                     .form-group
-                      label(for='url') GitHub URL
-                      input.form-control(type='text', name='url', value=url)
+                      label(for='urlField') GitHub URL
+                      input.form-control(type='text', name='urlField', value=urlField)
                       p.help-block.
                         For example, <code>https://github.com/hellojwilde/gossamer</code> 
                         or <code>https://github.com/hellojwilde/gossamer/tree/australis</code>
