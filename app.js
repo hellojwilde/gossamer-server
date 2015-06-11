@@ -10,7 +10,6 @@ var logger = require('morgan');
 var passport = require('passport');
 var path = require('path');
 var session = require('express-session');
-var userRoutes = require('./routes/user');
 
 var GithubStrategy = require('passport-github').Strategy;
 var GithubApi = require('github');
@@ -18,6 +17,7 @@ var Redis = require('ioredis');
 var Promise = require('bluebird');
 var Model = require('./model');
 var IndexRoutes = require('./routes/IndexRoutes');
+var UserRoutes = require('./routes/UserRoutes');
 
 var app = express();
 var redis = new Redis();
@@ -32,7 +32,6 @@ function doneify(promised, done) {
 }
 
 // authentication setup
-
 passport.use(new GithubStrategy(
   {
     clientID: config.githubClientId,
@@ -80,7 +79,7 @@ app.use(passport.session());
 
 // routes setup
 app.use('/', new IndexRoutes(model).router);
-app.use('/user', userRoutes);
+app.use('/user', new UserRoutes(model).router);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
