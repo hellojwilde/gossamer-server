@@ -6,16 +6,16 @@ var Promise = require('bluebird');
 
 // github+mozillians vouching
 
-function isGitHubUserVouched(github, accessToken) {
+function fetchGitHubUserVouch(github, accessToken) {
   return Promise.map(
-    getGitHubVerifiedEmails(github, accessToken),
-    isEmailVouched
+    fetchGitHubVerifiedEmails(github, accessToken),
+    fetchVouch
   ).then(function(vouches) {
     return vouches.indexOf(true) !== -1;
   });
 }
 
-function getGitHubVerifiedEmails(github, accessToken) {
+function fetchGitHubVerifiedEmails(github, accessToken) {
   return new Promise(function(resolve, reject) {
     github.authenticate({type: 'oauth', token: accessToken});
     github.user.getEmails({}, function(err, result) {
@@ -32,7 +32,7 @@ function getGitHubVerifiedEmails(github, accessToken) {
   });
 }
 
-function isEmailVouched(email) {
+function fetchVouch(email) {
   var url = (
     'https://mozillians.org/api/v2/users/?' +
     querystring.stringify({
@@ -49,4 +49,4 @@ function isEmailVouched(email) {
   }); 
 }
 
-module.exports = isGitHubUserVouched;
+module.exports = fetchGitHubUserVouch;

@@ -5,11 +5,12 @@ var cookieParser = require('cookie-parser');
 var express = require('express');
 var expressValidator = require('express-validator');
 var favicon = require('serve-favicon');
-var isGitHubUserVouched = require('./helpers/isGitHubUserVouched');
 var logger = require('morgan');
 var passport = require('passport');
 var path = require('path');
 var session = require('express-session');
+
+var fetchGitHubUserVouch = require('./helpers/fetchGitHubUserVouch');
 
 var GithubStrategy = require('passport-github').Strategy;
 var GithubApi = require('github');
@@ -41,7 +42,7 @@ passport.use(new GithubStrategy(
   },
   function(accessToken, _refreshToken, profile, done) {
     doneify(
-      isGitHubUserVouched(github, accessToken)
+      fetchGitHubUserVouch(github, accessToken)
         .then(function(isVouched) { 
           return model.putUser(profile, accessToken, isVouched)
         }),
