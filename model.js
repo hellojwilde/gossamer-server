@@ -65,7 +65,7 @@ Model.prototype = {
   },
 
   getExpById: function(id) {
-    return this._redis.get(getExpKey(id));
+    return this._redis.hgetall(getExpKey(id));
   },
 
   getExpsByUserId: function(userId) {

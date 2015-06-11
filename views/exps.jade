@@ -5,4 +5,8 @@ block content
     .row
       .col-sm-6.col-sm-offset-3
         h2 Your experiments
+        each exp in exps
+          h3
+            a(href='/exp/' + exp.id)= exp.description
+
         a.btn.btn-default.btn-lg.btn-primary(href='/exp') New Experiment

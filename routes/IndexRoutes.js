@@ -5,7 +5,7 @@ var renderWithDefaults = require('../helpers/renderWithDefaults');
 function IndexRoutes(model) {
   var router = express.Router();
 
-  router.get('/', this.getHome);
+  router.get('/', this.getHome.bind(this));
   router.get('/exp', ensureAuthenticated, this.getNewExp.bind(this));
   router.post('/exp', ensureAuthenticated, this.postNewExp.bind(this));
   router.get('/exp/:expId', ensureAuthenticated, this.getExp.bind(this));
@@ -21,9 +21,9 @@ IndexRoutes.prototype = {
       return;
     }
 
-    // TODO (jwilde): request a list of experiments for the current user
-    
-    renderWithDefaults(req, res, 'exps');
+    this.model.getExpsByUserId(req.user.id).then(function(exps) {
+      renderWithDefaults(req, res, 'exps', {exps: exps});
+    })
   },
 
   getNewExp: function(req, res) {
