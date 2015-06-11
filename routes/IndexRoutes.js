@@ -6,9 +6,9 @@ function IndexRoutes(model) {
   var router = express.Router();
 
   router.get('/', this.getHome);
-  router.get('/exp', ensureAuthenticated, this.getNewExp);
-  router.post('/exp', ensureAuthenticated, this.postNewExp);
-  router.get('/exp/:expHash', ensureAuthenticated, this.getExp);
+  router.get('/exp', ensureAuthenticated, this.getNewExp.bind(this));
+  router.post('/exp', ensureAuthenticated, this.postNewExp.bind(this));
+  router.get('/exp/:expId', ensureAuthenticated, this.getExp.bind(this));
 
   this.router = router;
   this.model = model;
@@ -31,23 +31,34 @@ IndexRoutes.prototype = {
   },
 
   postNewExp: function(req, res) {
-    req.checkBody('titleField', 'Title is missing').notEmpty();
     req.checkBody('urlField', 'URL is missing').notEmpty();
     req.checkBody('urlField', 'URL must be on GitHub').isURL({
       host_whitelist: ['github.com', 'www.github.com']
     });
+    req.checkBody('descField', 'Description is missing').notEmpty();
 
     var errors = req.validationErrors();
+
     if (errors) {
       renderWithDefaults(req, res, 'new-exp', {
-        errors: errors, 
-        titleField: req.body.titleField,
-        urlField: req.body.urlField
+        errors: errors,
+        urlField: req.body.urlField,
+        descField: req.body.descField
       });
       return;
     }
 
-    // TODO (jwilde): write to DB and redirect to the experiment page
+    // TODO: Check to make sure that we're not registering over somebody else's 
+    // experiment. Over the long term, we need to check that we actually are
+    // an owner or collaborator on the repo that we're submitting here.
+
+    this.model.putExp(
+      req.user.id, 
+      req.body.urlField, 
+      req.body.descField
+    ).then(function(exp) {
+      res.redirect('/exp/' + exp.id);
+    });
   },
 
   getExp: function(req, res) {
