@@ -2,6 +2,7 @@ var assign = require('lodash.assign');
 var crypto = require('crypto');
 
 var Promise = require('bluebird');
+var TimeSeries = require('redis-timeseries');
 
 function getUserKey(id, optSuffix) {
   var path = ['gos', 'user', id];
@@ -17,6 +18,7 @@ function getExpKey(id, optSuffix) {
 
 function Model(redis) {
   this._redis = redis;
+  this._timeseries = new TimeSeries(this._redis, 'gos:stats');
 }
 
 Model.prototype = {
@@ -44,9 +46,7 @@ Model.prototype = {
 
   putExp: function(userId, url, description) {
     var hash = crypto.createHash('sha1');
-    hash.update(url, 'ascii');
-
-    var id = hash.digest('base64');
+    var id = hash.update(url, 'ascii').digest('base64');
     var exp = {
       id: id,
       userId: userId,
@@ -59,9 +59,7 @@ Model.prototype = {
       .sadd(getUserKey(userId, 'exps'), id)
       .exec();
 
-    return writePromise.then(function() {
-      return exp;
-    });
+    return writePromise.then(function() {return exp;});
   },
 
   getExpById: function(id) {
@@ -73,6 +71,21 @@ Model.prototype = {
       this._redis.smembers(getUserKey(userId, 'exps')),
       this.getExpById.bind(this)
     );
+  },
+
+  putExpEvents: function(expId, userId, events) {
+    events.forEach(function(event) {
+      this._timeseries.recordHit(
+        [expId, event.key].join(':'),
+        event.timestamp,
+        event.increment
+      );
+    }.bind(this));
+
+    return Promise.promisify(this._timeseries.exec)()
+      .then(function() {
+        return events.length;''
+      });
   }
 };
 

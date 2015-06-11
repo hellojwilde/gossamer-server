@@ -16,6 +16,7 @@ var GithubApi = require('github');
 var Redis = require('ioredis');
 var Promise = require('bluebird');
 var Model = require('./model');
+var APIRoutes = require('./routes/APIRoutes');
 var IndexRoutes = require('./routes/IndexRoutes');
 var UserRoutes = require('./routes/UserRoutes');
 
@@ -80,6 +81,7 @@ app.use(passport.session());
 // routes setup
 app.use('/', new IndexRoutes(model).router);
 app.use('/user', new UserRoutes(model).router);
+app.use('/api/v1', new APIRoutes(model).router);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
