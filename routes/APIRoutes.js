@@ -26,16 +26,17 @@ function APIRoutes(model) {
 
 APIRoutes.prototype = {
   postEvents: function(req, res) {
-    // TODO: validate expId to make sure that it's a real experiment that's 
-    // been registered before we do anything else.
+    this.model.haveExpById(req.params.expId).then(function(haveExp) {
+      if (!haveExp) {
+        sendAPIError(res, 400, 'The experiment does not exist.');
+        return;
+      }
 
-    this.model.putExpEvents(
-      req.params.expId, 
-      req.user.id, 
-      req.body.events
-    )
-      .then(function(numPut) {sendAPISuccess(res, numPut)})
-      .catch(function(err) {sendAPIError(res, 500, err)});
+      this.model.putExpEvents(req.params.expId, req.body.events).then(
+        function(numPut) {sendAPISuccess(res, numPut)},
+        function(err) {sendAPIError(res, 500, err)}
+      );
+    });   
   }
 };
 
