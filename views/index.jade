@@ -26,17 +26,22 @@ block content
       .col-sm-4
         .panel.panel-default
           .panel-heading
+            h3.panel-title Your experiments
+
+          .panel-body
             if exps && exps.length
-              a.btn.btn-default.btn-sm.btn-primary.pull-right.exp-new-btn(href='/new-exp')
+              a.btn.btn-default.btn-block.btn-sm(href='/new-exp')
                 span.glyphicon.glyphicon-plus 
                 span &nbsp;New
-
-            h3.panel-title Your experiments
+            else
+              p You haven't created any experiments yet. Launch your first today.
+              a.btn.btn-default.btn-block.btn-primary(href='/new-exp')
+                span.glyphicon.glyphicon-plus 
+                span &nbsp;New
             
           if exps && exps.length
             ul.list-group
               each exp in exps
-                
                 li.list-group-item
                   a.exp(href='/exp/' + exp.id)
                     .exp-name= exp.title
@@ -48,12 +53,8 @@ block content
                       span.exp-details-item
                         span.glyphicon.glyphicon-bookmark
                         = exp.branch
-          else
-            .panel-body
-              p You haven't created any experiments yet. Launch your first today.
-              a.btn.btn-default.btn-block.btn-primary(href='/new-exp')
-                span.glyphicon.glyphicon-plus 
-                span &nbsp;New
+
+
 
 
 
