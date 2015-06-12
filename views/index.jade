@@ -3,8 +3,26 @@ extends layout
 block content
   .container.with-fixed-header
     .row
-      .col-sm-8
-        h3.timeline-heading What's new
+      .news.col-sm-8
+        h3.news-heading What's new
+
+        for item in news
+          .news-item
+            .news-item-timestamp.pull-right=moment.unix(item.timestamp).fromNow()
+
+            a.news-item-user(href=user.profile.profileUrl)
+              img.news-item-user-avatar.img-circle(
+                src=item.profile._json.avatar_url, 
+                alt=item.profile.displayName + ' Avatar'
+              )
+              =item.profile.displayName
+
+            span.news-item-action
+              case item.details.type
+                when 'newExp'
+                  =' created '
+                  a(href='/exp/' + item.details.id)= item.details.title
+
       .col-sm-4
         .panel.panel-default
           .panel-heading

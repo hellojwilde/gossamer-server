@@ -2,6 +2,8 @@ var express = require('express');
 var ensureAuthenticated = require('../helpers/ensureAuthenticated');
 var renderWithDefaults = require('../helpers/renderWithDefaults');
 
+var Promise = require('bluebird');
+
 function IndexRoutes(model, github) {
   var router = express.Router();
 
@@ -22,8 +24,11 @@ IndexRoutes.prototype = {
       return;
     }
 
-    this.model.getExpsByUsername(req.user.username).then(function(exps) {
-      renderWithDefaults(req, res, 'index', {exps: exps});
+    Promise.props({
+      exps: this.model.getExpsByUsername(req.user.username),
+      news: this.model.getAllNewsItems()
+    }).then(function(props) {
+      renderWithDefaults(req, res, 'index', props);
     });
   },
 
@@ -91,32 +96,39 @@ IndexRoutes.prototype = {
         return;
       }
 
-      console.log(req.user.accessToken, req.body.repo, req.user.username);
-
       this.github.authenticate({type: 'oauth', token: req.user.accessToken});
       this.github.repos.getCollaborators({
         user: req.user.username,
         repo: req.body.repo
       }, function(err, collaborators) {
         if (err) {
-          console.log(err);
           renderWithError('Something went wrong with GitHub.');
           return;
         }
 
-        console.log(collaborators);
-
-        this.model.putExp(
-          req.user.username, 
-          req.body.repo, 
-          req.body.branch,
-          collaborators.map(function(collaborator) {
-            return collaborator.login;
-          }),
-          req.body.title
-        ).then(function() {
-          res.redirect('/exp/' + id);
-        })
+        Promise.all([
+          this.model.putExp(
+            req.user.username, 
+            req.body.repo, 
+            req.body.branch,
+            collaborators.map(function(collaborator) {
+              return collaborator.login;
+            }),
+            req.body.title
+          ),
+          this.model.putNewsItem(
+            req.user.username,
+            req.user.profile,
+            {
+              type: 'newExp',
+              title: req.body.title,
+              id: id,
+              owner: req.body.owner,
+              repo: req.body.repo,
+              branch: req.body.branch,
+            }
+          )
+        ]).then(function() {res.redirect('/exp/' + id)});
       }.bind(this));
     }.bind(this));
   },

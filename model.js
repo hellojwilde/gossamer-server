@@ -3,6 +3,8 @@ var assign = require('lodash.assign');
 var Promise = require('bluebird');
 var TimeSeries = require('redis-timeseries');
 
+var MAX_NEWS_ITEMS = 100;
+
 function getUserKey(username, optSuffix) {
   var path = ['gos', 'user', username];
   optSuffix && path.push(optSuffix);
@@ -11,6 +13,12 @@ function getUserKey(username, optSuffix) {
 
 function getExpKey(id, optSuffix) {
   var path = ['gos', 'exp', id];
+  optSuffix && path.push(optSuffix);
+  return path.join(':');
+}
+
+function getNewsKey(optSuffix) {
+  var path = ['gos', 'news'];
   optSuffix && path.push(optSuffix);
   return path.join(':');
 }
@@ -96,6 +104,25 @@ Model.prototype = {
 
     return Promise.promisify(this._timeseries.exec)()
       .return(events.length);
+  },
+
+  putNewsItem: function(username, profile, details) {
+    return this._redis.pipeline()
+      .lpush(getNewsKey(), JSON.stringify({
+        username: username,
+        profile: profile,
+        details: details,
+        timestamp: Math.floor(new Date() / 1000)
+      }))
+      .ltrim(getNewsKey(), 0, MAX_NEWS_ITEMS)
+      .exec();
+  },
+
+  getAllNewsItems: function() {
+    return Promise.map(
+      this._redis.lrange(getNewsKey(), 0, -1), 
+      JSON.parse
+    );
   }
 };
 

@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var express = require('express');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
+var moment = require('moment');
 var passport = require('passport');
 var path = require('path');
 var session = require('express-session');
@@ -61,6 +62,7 @@ passport.deserializeUser(function(username, done) {
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+app.locals.moment = moment;
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));

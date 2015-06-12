@@ -44,8 +44,27 @@
   margin-top: 20px;
 }
 
-.timeline-heading {
+.news-heading {
   margin-top: 5px;
+}
+
+.news-item {
+  line-height: 50px;
+  border-bottom: 1px solid #eee;
+}
+
+.news-item:last-child {
+  border-bottom: 0 none;
+}
+
+.news-item-user-avatar {
+  width: 30px;
+  height: 30px;
+  margin: 10px 10px 10px 0;
+}
+
+.news-item-timestamp {
+  color: #999;
 }
 
 .exp-new-btn {
