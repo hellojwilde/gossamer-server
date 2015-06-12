@@ -5,7 +5,7 @@ function ensureAuthenticated(req, res, next) {
 
   res.redirect(
     '/user/login?' + 
-    querystring.stringify({redirect: req.path})
+    querystring.stringify({redirect: req.originalUrl})
   );
 }
 
