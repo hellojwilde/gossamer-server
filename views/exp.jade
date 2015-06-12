@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  .container.with-fixed-header
+    .row
+      .exp.col-sm-8.col-sm-offset-2
+        .exp-header
+          a(href='/exp/' + exp.id)
+            h1.exp-name= exp.title
+
+          .exp-details
+            span.exp-details-item
+              span.glyphicon.glyphicon-book
+              - var repo = exp.owner + '/' + exp.repo;
+              a(href='https://github.com/' + repo)
+                = repo
+
+            span.exp-details-item
+              span.glyphicon.glyphicon-bookmark
+              a(href='https://github.com/' + repo + '/tree/' + exp.branch)
+                = exp.branch
+
+        if !eventTypes.length
+          .alert.alert-info(role='alert').
+            There's no data to show yet.

@@ -94,16 +94,25 @@ Model.prototype = {
   },
 
   putExpEvents: function(id, events) {
+    var keySet = {};
+
     events.forEach(function(event) {
-      this._timeseries.recordHit(
-        [id, event.key].join(':'),
-        event.timestamp,
-        event.increment
-      );
+      var key = [id, event.key].join(':');
+      keySet[key] = true;
+      this._timeseries.recordHit(key, event.timestamp, event.increment);
     }.bind(this));
 
-    return Promise.promisify(this._timeseries.exec)()
-      .return(events.length);
+    return Promise.all([
+      Promise.promisify(this._timeseries.exec)(),
+      this._redis.sadd(getExpKey(id, 'eventTypes'), Object.keys(keySet))
+    ]).return({
+      events: events.length,
+      eventTypes: Object.keys(keySet)
+    });
+  },
+
+  getExpEventTypes: function(id) {
+    return this._redis.smembers(getExpKey(id, 'eventTypes'));
   },
 
   putNewsItem: function(profile, details) {

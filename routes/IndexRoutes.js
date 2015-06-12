@@ -133,7 +133,12 @@ IndexRoutes.prototype = {
   },
 
   getExp: function(req, res) {
-    // TODO (jwilde): actually render something here
+    Promise.props({
+      exp: this.model.getExpById(req.params.expId),
+      eventTypes: this.model.getExpEventTypes(req.params.expId)
+    }).then(function(props) {
+      renderWithDefaults(req, res, 'exp', props);
+    });
   }
 }
 
