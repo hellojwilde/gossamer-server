@@ -25,10 +25,14 @@
   vertical-align: middle;
 }
 
+.navbar-user {
+  padding: 0 !important;
+}
+
 .navbar-user-avatar {
   width: 30px;
   height: 30px;
-  margin: 10px 0;
+  margin: 10px;
 }
 
 .navbar-user-name a {
@@ -37,7 +41,7 @@
 }
 
 .navbar-user-voucher {
-  margin-left: 0 !important;
+  padding: 15px 10px;
 }
 
 .placeholder-main-btn {
@@ -65,6 +69,10 @@
 
 .news-item-timestamp {
   color: #999;
+}
+
+.exp-header {
+  margin-bottom: 20px;
 }
 
 .exp-name {
