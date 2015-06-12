@@ -1,0 +1,18 @@
+extends ../layout
+
+block content
+  .container.with-fixed-header
+    .row
+      .col-sm-6.col-sm-offset-3
+        .panel.panel-default
+          .panel-heading
+            span.pull-right.text-muted #{step} of #{steps}
+            h3.panel-title New Experiment
+
+          .panel-body
+            if error
+              .alert.alert-danger(role='alert')
+                p= error
+
+            block new-exp-content
+

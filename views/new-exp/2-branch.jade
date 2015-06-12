@@ -1,0 +1,19 @@
+extends layout
+
+block new-exp-content
+  form(method='get', action='/new-exp')
+    input(type='hidden', name='repo', value=repo)
+
+    .form-group
+      label(for='repo') Branch in #{repo}
+      for branch in branches
+        .radio
+          label
+            input(type='radio', name='branch', value=branch.name)
+            = branch.name
+
+    .form-group
+      input.btn.btn-default.btn-primary.pull-right(
+        type='submit',
+        value='Next'
+      )

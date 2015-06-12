@@ -31,7 +31,7 @@ UserRoutes.prototype = {
   getOAuth: function(req, res) {
     passport.authenticate('github', {
       failureRedirect: '/user/login',
-      scope: ['user:email'],
+      scope: ['user:email', 'public_repo'],
       state: JSON.stringify({redirect: req.query.redirect})
     })(req, res);
   },
@@ -40,6 +40,7 @@ UserRoutes.prototype = {
     passport.authenticate('github', {
       failureRedirect: '/user/login',
     })(req, res, function(req, res) {
+      // TODO: Make sure we validate this URL before doing any redirects.
       var state = JSON.parse(req.query.state);
       res.redirect(state.redirect ? state.redirect : '/');
     }.bind(null, req, res));

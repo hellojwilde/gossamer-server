@@ -1,11 +1,10 @@
 var assign = require('lodash.assign');
-var crypto = require('crypto');
 
 var Promise = require('bluebird');
 var TimeSeries = require('redis-timeseries');
 
-function getUserKey(id, optSuffix) {
-  var path = ['gos', 'user', id];
+function getUserKey(username, optSuffix) {
+  var path = ['gos', 'user', username];
   optSuffix && path.push(optSuffix);
   return path.join(':');
 }
@@ -24,68 +23,79 @@ function Model(redis) {
 Model.prototype = {
   putUser: function(profile, accessToken, isVouched) {
     var writePromise = this._redis.multi()
-      .set(getUserKey(profile.id, 'accessToken'), accessToken)
-      .set(getUserKey(profile.id, 'isVouched'), isVouched)
-      .set(getUserKey(profile.id), JSON.stringify(profile))
+      .set(getUserKey(profile.username, 'accessToken'), accessToken)
+      .set(getUserKey(profile.username, 'isVouched'), isVouched)
+      .set(getUserKey(profile.username), JSON.stringify(profile))
       .exec();
 
     return writePromise.then(function() {
-      return assign({}, profile, {isVouched: isVouched});
+      return {
+        username: profile.username,
+        profile: profile,
+        isVouched: isVouched
+      };
     });
   },
 
-  getUserById: function(id) {
+  getUserByUsername: function(username) {
     return Promise.props({
-      profile: this._redis.get(getUserKey(id)),
-      isVouched: this._redis.get(getUserKey(id, 'isVouched'))
-    })
-    .then(function(user) {
-      return assign(JSON.parse(user.profile), {isVouched: user.isVouched});
+      username: username,
+      profile: this._redis.get(getUserKey(username)).then(JSON.parse),
+      isVouched: this._redis.get(getUserKey(username, 'isVouched')),
+      accessToken: this._redis.get(getUserKey(username, 'accessToken'))
     });
   },
 
-  putExp: function(userId, url, description) {
-    var hash = crypto.createHash('sha1');
-    var id = hash.update(url, 'ascii').digest('base64');
+  putExp: function(owner, repo, branch, collaborators, title) {
+    var id = this.getExpId(owner, repo, branch);
     var exp = {
       id: id,
-      userId: userId,
-      url: url, 
-      description: description
+      owner: owner,
+      repo: repo,
+      branch: branch,
+      title: title
     };
 
-    var writePromise = this._redis.multi()
-      .hmset(getExpKey(id), exp)
-      .sadd(getUserKey(userId, 'exps'), id)
-      .exec();
+    var transaction = this._redis.multi()
+      .hmset(getExpKey(id), exp);
 
-    return writePromise.then(function() {return exp;});
+    collaborators.forEach(function(collaborator) {
+      transaction.sadd(getUserKey(collaborator, 'exps'), id);
+    });
+
+    return transaction.exec().return(exp);
+  },
+
+  getExpId: function(owner, repo, branch) {
+    return [owner, repo, branch].join(':');
+  },
+
+  haveExpById: function(id) {
+    return this._redis.exists(getExpKey(id));
   },
 
   getExpById: function(id) {
     return this._redis.hgetall(getExpKey(id));
   },
 
-  getExpsByUserId: function(userId) {
+  getExpsByUsername: function(username) {
     return Promise.map(
-      this._redis.smembers(getUserKey(userId, 'exps')),
+      this._redis.smembers(getUserKey(username, 'exps')),
       this.getExpById.bind(this)
     );
   },
 
-  putExpEvents: function(expId, userId, events) {
+  putExpEvents: function(id, events) {
     events.forEach(function(event) {
       this._timeseries.recordHit(
-        [expId, event.key].join(':'),
+        [id, event.key].join(':'),
         event.timestamp,
         event.increment
       );
     }.bind(this));
 
     return Promise.promisify(this._timeseries.exec)()
-      .then(function() {
-        return events.length;''
-      });
+      .return(events.length);
   }
 };
 

@@ -1,0 +1,17 @@
+extends layout
+
+block new-exp-content
+  form(method='post', action='/new-exp')
+    input(type='hidden', name='repo', value=repo)
+    input(type='hidden', name='branch', value=branch)
+
+    .form-group
+      label(for='title') Title
+      input.form-control(type='text', name='title', value=expTitle)
+      p.help-block Give everybody a pithy one-liner about what you're testing.
+    
+    .form-group
+      input.btn.btn-default.btn-primary.pull-right(
+        type='submit', 
+        value='Create Experiment'
+      )

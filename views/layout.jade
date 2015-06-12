@@ -25,12 +25,12 @@ html(lang='en')
             if isAuthenticated
               li
                 img.navbar-user-avatar.img-circle(
-                  src=user._json.avatar_url, 
+                  src=user.profile._json.avatar_url, 
                   alt='Avatar'
                 )
               li.navbar-user-name
-                a(href=user.profileUrl)
-                  =user.displayName
+                a(href=user.profile.profileUrl)
+                  =user.profile.displayName
               li.navbar-text.navbar-user-voucher
                 if user.isVouched
                   span.glyphicon.glyphicon-ok-sign

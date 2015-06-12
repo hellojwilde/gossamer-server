@@ -1,20 +1,41 @@
 extends layout
 
 block content
-  .full-page
-    .vertical-center
-      .vertical-center-inner
-        .container
-          .row
-            .col-sm-6.col-sm-offset-3
-              .panel.panel-default
-                .panel-body
-                  p.lead Gossamer makes it easy to rapidly test experimental web browser features.
-                  ul
-                    li Deploy experimental features to users.
-                    li Receive real-time metrics on usage and errors.
-                    li Show your verification status in <a href="http://mozillians.org">mozillians.org</a> to build trust.
-                  p Ready to get started?
-                  a.btn.btn-lg.btn-default.btn-primary.btn-block.placeholder-main-btn(
-                    href='/user/oauth'
-                  ) Log in with GitHub
+  .container.with-fixed-header
+    .row
+      .col-sm-8
+        h3.timeline-heading What's new
+      .col-sm-4
+        .panel.panel-default
+          .panel-heading
+            if exps && exps.length
+              a.btn.btn-default.btn-sm.btn-primary.pull-right.exp-new-btn(href='/new-exp')
+                span.glyphicon.glyphicon-plus 
+                span &nbsp;New
+
+            h3.panel-title Your experiments
+            
+          if exps && exps.length
+            .list-group
+              each exp in exps
+                a.exp(href='/exp/' + exp.id)
+                  .list-group-item
+                    .exp-name= exp.title
+                    .exp-details
+                      span.exp-details-item
+                        span.glyphicon.glyphicon-book
+                        = exp.owner + '/' + exp.repo
+
+                      span.exp-details-item
+                        span.glyphicon.glyphicon-bookmark
+                        = exp.branch
+          else
+            .panel-body
+              p You haven't created any experiments yet. Launch your first today.
+              a.btn.btn-default.btn-block.btn-primary(href='/new-exp')
+                span.glyphicon.glyphicon-plus 
+                span &nbsp;New
+
+
+
+        

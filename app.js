@@ -3,7 +3,6 @@ var bodyParser = require('body-parser');
 var config = require('./config');
 var cookieParser = require('cookie-parser');
 var express = require('express');
-var expressValidator = require('express-validator');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var passport = require('passport');
@@ -52,11 +51,11 @@ passport.use(new GithubStrategy(
 ));
 
 passport.serializeUser(function(user, done) {
-  done(null, user.id);
+  done(null, user.username);
 });
 
-passport.deserializeUser(function(id, done) {
-  doneify(model.getUserById(id), done);
+passport.deserializeUser(function(username, done) {
+  doneify(model.getUserByUsername(username), done);
 });
 
 // view engine setup
@@ -68,7 +67,6 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(expressValidator());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
@@ -80,8 +78,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // routes setup
-app.use('/', new IndexRoutes(model).router);
-app.use('/user', new UserRoutes(model).router);
+app.use('/', new IndexRoutes(model, github).router);
+app.use('/user', new UserRoutes().router);
 app.use('/api/v1', new APIRoutes(model).router);
 
 // catch 404 and forward to error handler

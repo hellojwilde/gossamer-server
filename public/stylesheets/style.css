@@ -7,7 +7,11 @@
 }
 
 .with-fixed-header {
-  margin-top: 55px;
+  margin-top: 75px;
+}
+
+.container {
+  max-width: 920px;
 }
 
 .vertical-center {
@@ -19,10 +23,6 @@
 .vertical-center-inner {
   display: table-cell;
   vertical-align: middle;
-}
-
-.placeholder-main-btn {
-  margin-top: 20px;
 }
 
 .navbar-user-avatar {
@@ -38,4 +38,43 @@
 
 .navbar-user-voucher {
   margin-left: 0 !important;
+}
+
+.placeholder-main-btn {
+  margin-top: 20px;
+}
+
+.timeline-heading {
+  margin-top: 5px;
+}
+
+.exp-new-btn {
+  margin-top: -6px;
+}
+
+.exp-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.exp-details {
+  font-size: 0.8em;
+  color: #999;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+a.exp:hover {
+  text-decoration: none;
+}
+
+a.exp:hover .exp-name {
+  text-decoration: underline;
+}
+
+.exp-details-item {
+  margin-right: 10px; 
+}
+
+.exp-details-item .glyphicon {
+  margin-right: 5px;
 }
