@@ -106,10 +106,9 @@ Model.prototype = {
       .return(events.length);
   },
 
-  putNewsItem: function(username, profile, details) {
+  putNewsItem: function(profile, details) {
     return this._redis.pipeline()
       .lpush(getNewsKey(), JSON.stringify({
-        username: username,
         profile: profile,
         details: details,
         timestamp: Math.floor(new Date() / 1000)

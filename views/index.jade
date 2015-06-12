@@ -34,10 +34,11 @@ block content
             h3.panel-title Your experiments
             
           if exps && exps.length
-            .list-group
+            ul.list-group
               each exp in exps
-                a.exp(href='/exp/' + exp.id)
-                  .list-group-item
+                
+                li.list-group-item
+                  a.exp(href='/exp/' + exp.id)
                     .exp-name= exp.title
                     .exp-details
                       span.exp-details-item

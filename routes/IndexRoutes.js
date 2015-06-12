@@ -117,7 +117,6 @@ IndexRoutes.prototype = {
             req.body.title
           ),
           this.model.putNewsItem(
-            req.user.username,
             req.user.profile,
             {
               type: 'newExp',
