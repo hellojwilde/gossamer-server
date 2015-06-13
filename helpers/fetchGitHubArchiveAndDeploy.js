@@ -1,10 +1,10 @@
-var request = require('request');
 var config = require('../config');
-var path = require('path');
-var mkdirp = require('mkdirp');
-var tar = require('tar-stream');
-var gunzip = require('gunzip-maybe');
 var fs = require('fs');
+var gunzip = require('gunzip-maybe');
+var mkdirp = require('mkdirp');
+var path = require('path');
+var request = require('request');
+var tar = require('tar-stream');
 
 var Promise = require('bluebird');
 
