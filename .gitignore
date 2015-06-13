@@ -31,3 +31,6 @@ config.js
 
 # The awful Mac OS X thumbnail file
 .DS_Store
+
+# All deployed builds.
+public/builds

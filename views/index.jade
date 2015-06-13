@@ -10,7 +10,7 @@ block content
           .news-item
             .news-item-timestamp.pull-right=moment.unix(item.timestamp).fromNow()
 
-            a.news-item-user(href=user.profile.profileUrl)
+            a.news-item-user(href=item.profile.profileUrl)
               img.news-item-user-avatar.img-circle(
                 src=item.profile._json.avatar_url, 
                 alt=item.profile.displayName + ' Avatar'
@@ -22,6 +22,12 @@ block content
                 when 'newExp'
                   =' created '
                   a(href='/exp/' + item.details.id)= item.details.title
+                when 'newExpBuild'
+                  =' shipped '
+                  a(href='/builds/' + item.details.exp.id + '/' + item.details.id)
+                    = 'build #' + item.details.id
+                  =' of '
+                  a(href='/exp/' + item.details.exp.id)= item.details.exp.title
 
       .col-sm-4
         .panel.panel-default
@@ -29,15 +35,9 @@ block content
             h3.panel-title Your experiments
 
           .panel-body
-            if exps && exps.length
-              a.btn.btn-default.btn-block.btn-sm(href='/new-exp')
-                span.glyphicon.glyphicon-plus 
-                span &nbsp;New
-            else
-              p You haven't created any experiments yet. Launch your first today.
-              a.btn.btn-default.btn-block.btn-primary(href='/new-exp')
-                span.glyphicon.glyphicon-plus 
-                span &nbsp;New
+              if !exps || !exps.length
+                p You haven't created any experiments yet. Launch your first today.
+              a.btn.btn-default.btn-block.btn-primary.btn-sm(href='/new-exp') New
             
           if exps && exps.length
             ul.list-group

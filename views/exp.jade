@@ -3,7 +3,7 @@ extends layout
 block content
   .container.with-fixed-header
     .row
-      .exp.col-sm-8.col-sm-offset-2
+      .col-sm-8
         .exp-header
           a(href='/exp/' + exp.id)
             h1.exp-name= exp.title
@@ -19,7 +19,45 @@ block content
               span.glyphicon.glyphicon-bookmark
               a(href='https://github.com/' + repo + '/tree/' + exp.branch)
                 = exp.branch
-
         if !eventTypes.length
           .alert.alert-info(role='alert').
             There's no data to show yet.
+
+      .col-sm-4
+        .panel.panel-default
+          .panel-heading
+            h3.panel-title Builds
+
+          .panel-body
+            if !builds || !builds.length
+              p You haven't shipped any builds yet. Ship one and start getting data.
+
+            form(method='post', action='/exp/' + exp.id + '/ship')
+              input.btn.btn-default.btn-block.btn-sm.btn-primary(
+                type='submit',
+                value='Ship'
+              )
+
+          if builds && builds.length
+            ul.list-group
+              - var buildId = builds.length;
+              each build in builds
+                li.list-group-item
+                  .clearfix
+                    a.build-number.pull-right(href='/builds/'+exp.id+'/'+buildId)
+                      ='#' + buildId
+                    a.build-commit(href=build.commit.html_url)
+                      code=build.commit.sha.slice(0,5)
+                      = ' ' +build.commit.commit.message
+
+                  .clearfix
+                    a(href=build.profile.profileUrl)
+                      img.build-user-avatar.img-circle(
+                        src=build.profile._json.avatar_url, 
+                        alt=build.profile.displayName + ' Avatar'
+                      )
+                    span.build-timestamp=moment.unix(build.timestamp).fromNow()
+
+                  
+
+                - buildId--;

@@ -20,6 +20,7 @@ var Model = require('./model');
 var APIRoutes = require('./routes/APIRoutes');
 var IndexRoutes = require('./routes/IndexRoutes');
 var UserRoutes = require('./routes/UserRoutes');
+var RedisStore = require('connect-redis')(session);
 
 var app = express();
 var redis = new Redis();
@@ -34,6 +35,14 @@ function doneify(promised, done) {
 }
 
 // authentication setup
+passport.serializeUser(function(user, done) {
+  done(null, user.username);
+});
+
+passport.deserializeUser(function(username, done) {
+  doneify(model.getUserByUsername(username), done);
+});
+
 passport.use(new GithubStrategy(
   {
     clientID: config.githubClientId,
@@ -43,21 +52,13 @@ passport.use(new GithubStrategy(
   function(accessToken, _refreshToken, profile, done) {
     doneify(
       fetchGitHubUserVouch(github, accessToken)
-        .then(function(isVouched) { 
+        .then(function(isVouched) {
           return model.putUser(profile, accessToken, isVouched)
         }),
       done
     );
   }
 ));
-
-passport.serializeUser(function(user, done) {
-  done(null, user.username);
-});
-
-passport.deserializeUser(function(username, done) {
-  doneify(model.getUserByUsername(username), done);
-});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -74,7 +75,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   resave: false,
   saveUninitialized: false,
-  secret: config.sessionSecret
+  secret: config.sessionSecret,
+  store: new RedisStore({client: redis, prefix: 'gos:sess:'})
 }));
 app.use(passport.initialize());
 app.use(passport.session());

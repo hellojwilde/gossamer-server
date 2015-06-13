@@ -1,5 +1,5 @@
 var querystring = require('querystring');
-var fetch = require('node-fetch');
+var request = require('request');
 var config = require('../config');
 
 var Promise = require('bluebird');
@@ -42,11 +42,17 @@ function fetchVouch(email) {
     })
   );
 
-  return fetch(url).then(function(res) {
-    return res.json().then(function(parsed) {
-      return parsed && parsed.count && parsed.count > 0;
-    });
-  }); 
+  return new Promise(function(resolve, reject) {
+    request(url, function(err, response, body) {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      var parsed = JSON.parse(body);
+      resolve(parsed && parsed.count && parsed.count > 0);
+    })
+  });
 }
 
 module.exports = fetchGitHubUserVouch;

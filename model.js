@@ -5,6 +5,10 @@ var TimeSeries = require('redis-timeseries');
 
 var MAX_NEWS_ITEMS = 100;
 
+function getUnixTimestamp() {
+  return Math.floor(new Date() / 1000);
+}
+
 function getUserKey(username, optSuffix) {
   var path = ['gos', 'user', username];
   optSuffix && path.push(optSuffix);
@@ -86,10 +90,29 @@ Model.prototype = {
     return this._redis.hgetall(getExpKey(id));
   },
 
+  haveExpByUsernameId: function(username, id) {
+    return this._redis.sismember(getUserKey(username, 'exps'), id);
+  },
+
   getExpsByUsername: function(username) {
     return Promise.map(
       this._redis.smembers(getUserKey(username, 'exps')),
       this.getExpById.bind(this)
+    );
+  },
+
+  putExpBuild: function(profile, id, commit) {
+    return this._redis.lpush(getExpKey(id, 'builds'), JSON.stringify({
+      profile: profile,
+      commit: commit,
+      timestamp: getUnixTimestamp()
+    }));
+  },
+
+  getAllExpBuilds: function(id) {
+    return Promise.map(
+      this._redis.lrange(getExpKey(id, 'builds'), 0, -1),
+      JSON.parse
     );
   },
 
@@ -102,10 +125,10 @@ Model.prototype = {
       this._timeseries.recordHit(key, event.timestamp, event.increment);
     }.bind(this));
 
-    return Promise.all([
+    return Promise.join(
       Promise.promisify(this._timeseries.exec)(),
       this._redis.sadd(getExpKey(id, 'eventTypes'), Object.keys(keySet))
-    ]).return({
+    ).return({
       events: events.length,
       eventTypes: Object.keys(keySet)
     });
@@ -120,7 +143,7 @@ Model.prototype = {
       .lpush(getNewsKey(), JSON.stringify({
         profile: profile,
         details: details,
-        timestamp: Math.floor(new Date() / 1000)
+        timestamp: getUnixTimestamp()
       }))
       .ltrim(getNewsKey(), 0, MAX_NEWS_ITEMS)
       .exec();

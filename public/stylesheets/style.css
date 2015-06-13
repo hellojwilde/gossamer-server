@@ -42,6 +42,7 @@
 
 .navbar-user-voucher {
   padding: 15px 10px;
+  color: #777;
 }
 
 .placeholder-main-btn {
@@ -75,6 +76,10 @@
   margin-bottom: 20px;
 }
 
+.exp-header h1 {
+  margin-top: 0;
+}
+
 .exp-name {
   font-weight: bold;
   margin-bottom: 5px;
@@ -100,4 +105,23 @@ a.exp:hover .exp-name {
 
 .exp-details-item .glyphicon {
   margin-right: 5px;
+}
+
+.build-number {
+  font-weight: bold;
+}
+
+.build-commit {
+  margin-right: 30px;
+  display: block;
+}
+
+.build-user-avatar {
+  width: 24px;
+  margin-right: 5px
+}
+
+.build-timestamp {
+  color: #999;
+  line-height: 30px;
 }
