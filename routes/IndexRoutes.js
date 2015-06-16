@@ -182,7 +182,8 @@ IndexRoutes.prototype = {
             return fetchGitHubArchiveAndDeploy(
               req.params.expId, 
               id, 
-              archiveUrl
+              archiveUrl,
+              req.protocol + '://' + req.get('host')
             ).return(id);
           }),
         this.model.getExpById(req.params.expId),

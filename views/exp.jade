@@ -40,15 +40,14 @@ block content
 
           if builds && builds.length
             ul.list-group
-              - var buildId = builds.length;
-              each build in builds
+              each build in builds.reverse()
                 li.list-group-item
                   .clearfix
-                    a.build-number.pull-right(href='/builds/'+exp.id+'/'+buildId)
-                      ='#' + buildId
+                    a.build-number.pull-right(href='/builds/'+exp.id+'/'+build.id)
+                      ='#' + build.id
                     a.build-commit(href=build.commit.html_url)
                       code=build.commit.sha.slice(0,5)
-                      = ' ' +build.commit.commit.message
+                      = ' ' +build.commit.commit.message.slice(0, 50)
 
                   .clearfix
                     a(href=build.profile.profileUrl)

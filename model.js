@@ -102,18 +102,44 @@ Model.prototype = {
   },
 
   putExpBuild: function(profile, id, commit) {
-    return this._redis.lpush(getExpKey(id, 'builds'), JSON.stringify({
+    return this._redis.rpush(getExpKey(id, 'builds'), JSON.stringify({
       profile: profile,
       commit: commit,
       timestamp: getUnixTimestamp()
     }));
   },
 
+  getLatestExpBuildId: function(expId) {
+    return this._redis.llen(getExpKey(expId, 'builds'));
+  },
+
+  getLatestExpBuild: function(expId, baseUrl) {
+    return Promise.all([
+      this._redis.lindex(getExpKey(expId, 'builds'), -1),
+      this.getLatestExpBuildId(expId)
+    ]).then(function(results) {
+      return assign(JSON.parse(results[0]), {
+        link: baseUrl + '/builds/' + expId + '/' + results[1],
+        id: +results[1]
+      });
+    });
+  },
+
   getAllExpBuilds: function(id) {
     return Promise.map(
       this._redis.lrange(getExpKey(id, 'builds'), 0, -1),
-      JSON.parse
+      function(value, index) {
+        return assign(JSON.parse(value), {id: index+1});
+      }
     );
+  },
+
+  putExpBuildOutput: function(expId, id, output) {
+    return this._redis.rpush(getExpKey(expId, 'builds:' + id), output);
+  },
+
+  getAllExpBuildOutput: function(expId, id) {
+    return this._redis.lrange(getExpKey(expId, 'builds:' + id), 0, -1);
   },
 
   putExpEvents: function(id, events) {

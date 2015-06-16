@@ -25,6 +25,12 @@
   vertical-align: middle;
 }
 
+.navbar-inverse li,
+.navbar-inverse.navbar li a,
+.navbar-inverse.navbar a.navbar-brand {
+  color: white;
+}
+
 .navbar-user {
   padding: 0 !important;
 }
@@ -42,7 +48,6 @@
 
 .navbar-user-voucher {
   padding: 15px 10px;
-  color: #777;
 }
 
 .placeholder-main-btn {
