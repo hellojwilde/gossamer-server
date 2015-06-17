@@ -11,6 +11,7 @@ var path = require('path');
 var session = require('express-session');
 
 var fetchGitHubUserVouch = require('./helpers/fetchGitHubUserVouch');
+var renderWithDefaults = require('./helpers/renderWithDefaults');
 
 var GithubStrategy = require('passport-github').Strategy;
 var GithubApi = require('github');
@@ -20,6 +21,7 @@ var Model = require('./model');
 var APIRoutes = require('./routes/APIRoutes');
 var IndexRoutes = require('./routes/IndexRoutes');
 var UserRoutes = require('./routes/UserRoutes');
+var BuildRoutes = require('./routes/BuildRoutes');
 var RedisStore = require('connect-redis')(session);
 
 var app = express();
@@ -83,6 +85,7 @@ app.use(passport.session());
 
 // routes setup
 app.use('/', new IndexRoutes(model, github).router);
+app.use('/my', new BuildRoutes(model).router);
 app.use('/user', new UserRoutes().router);
 app.use('/api/v1', new APIRoutes(model).router);
 
@@ -100,7 +103,7 @@ app.use(function(req, res, next) {
 if (app.get('env') === 'development') {
   app.use(function(err, req, res, next) {
     res.status(err.status || 500);
-    res.render('error', {
+    renderWithDefaults(req, res, 'error', {
       message: err.message,
       error: err
     });
@@ -111,7 +114,7 @@ if (app.get('env') === 'development') {
 // no stacktraces leaked to user
 app.use(function(err, req, res, next) {
   res.status(err.status || 500);
-  res.render('error', {
+  renderWithDefaults(req, res, 'error', {
     message: err.message,
     error: {}
   });

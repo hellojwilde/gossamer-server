@@ -1,7 +1,7 @@
-extends layout
+extends _core
 
-block content
-  .container.with-fixed-header
+block page
+  .container
     h1= message
     h2= error.status
     pre #{error.stack}

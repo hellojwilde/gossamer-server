@@ -29,8 +29,8 @@ function fetchGithubArchiveAndDeploy(expId, buildId, archiveUrl, apiBaseUrl) {
           .pipe(replaceStream(
             '{/* INJECTED_UPDATER_INFO */}',
             JSON.stringify({
-              latestBuildUrl: apiBaseUrl+'/api/v1/exp/'+expId+'/builds/latest',
-              buildId: buildId
+              latestBuildUrl: apiBaseUrl + '/api/v1/my/latest',
+              buildId: [expId, buildId].join('/')
             })
           ))
           .pipe(fs.createWriteStream(fullBuildPath));

@@ -1,5 +1,6 @@
 var express = require('express');
 var assign = require('lodash.assign');
+var getBaseUrl = require('../helpers/getBaseUrl');
 
 function ensureAPIAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {return next();}
@@ -27,35 +28,36 @@ function sendify(promised, res) {
 function APIRoutes(model) {
   var router = express.Router();
 
-  router.get('/exp/:expId/builds/latest', this.getExpLatestBuild.bind(this));
-  router.post('/exp/:expId/events', this.postEvents.bind(this));
+  router.get('/my/latest', ensureAPIAuthenticated, this.getMyExpLatestBuild.bind(this));
+  router.post('/my', ensureAPIAuthenticated, this.postMyExp.bind(this));
+  router.post('/my/events', ensureAPIAuthenticated, this.postMyExpEvents.bind(this));
 
   this.router = router;
   this.model = model;
 }
 
 APIRoutes.prototype = {
-  getExpLatestBuild: function(req, res) {
-    sendify(
-      this.model.getLatestExpBuild(
-        req.params.expId, 
-        req.protocol + '://' + req.get('host')
-      ),
-      res
-    );
+  getMyExpLatestBuild: function(req, res) {
+    sendify(this.model.getMyExpBuildId(req.user.username, getBaseUrl(req)), res);
   },
 
-  postEvents: function(req, res) {
-    this.model.haveExpById(req.params.expId).then(function(haveExp) {
-      if (!haveExp) {
-        sendAPIError(res, 400, 'The experiment does not exist.');
+  postMyExp: function(req, res) {
+    this.model.getLatestExpBuildId(req.body.expId).then(function(buildId) {
+      if (!buildId) {
+        sendAPIError(res, 400, 'That expId does not have builds.');
         return;
       }
+      sendify(this.model.putMyExp(req.user.username, res.body.expId), res);
+    });
+  },
 
-      sendify(
-        this.model.putExpEvents(req.params.expId, req.body.events),
-        res
-      );
+  postMyExpEvents: function(req, res) {
+    this.model.getMyExp(req.user.username).then(function(expId) {
+      if (!expId) {
+        sendAPIError(res, 400, 'User is not enrolled in any experiments.');
+        return;
+      }
+      sendify(this.model.putExpEvents(expId, req.body.events), res);
     });   
   }
 };

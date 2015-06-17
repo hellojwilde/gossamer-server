@@ -1,13 +1,10 @@
 var assign = require('lodash.assign');
+var getUnixTimestamp = require('./helpers/getUnixTimestamp');
 
 var Promise = require('bluebird');
 var TimeSeries = require('redis-timeseries');
 
 var MAX_NEWS_ITEMS = 100;
-
-function getUnixTimestamp() {
-  return Math.floor(new Date() / 1000);
-}
 
 function getUserKey(username, optSuffix) {
   var path = ['gos', 'user', username];
@@ -113,18 +110,6 @@ Model.prototype = {
     return this._redis.llen(getExpKey(expId, 'builds'));
   },
 
-  getLatestExpBuild: function(expId, baseUrl) {
-    return Promise.all([
-      this._redis.lindex(getExpKey(expId, 'builds'), -1),
-      this.getLatestExpBuildId(expId)
-    ]).then(function(results) {
-      return assign(JSON.parse(results[0]), {
-        link: baseUrl + '/builds/' + expId + '/' + results[1],
-        id: +results[1]
-      });
-    });
-  },
-
   getAllExpBuilds: function(id) {
     return Promise.map(
       this._redis.lrange(getExpKey(id, 'builds'), 0, -1),
@@ -180,6 +165,25 @@ Model.prototype = {
       this._redis.lrange(getNewsKey(), 0, -1), 
       JSON.parse
     );
+  },
+
+  putMyExp: function(username) {
+    return this._redis.set(getUserKey(username, 'my'));
+  },
+
+  getMyExp: function(username) {
+    return this._redis.get(getUserKey(username, 'my'));
+  },
+
+  getMyExpBuildId: function(username, baseUrl) {
+    return this.getMyExp(username).then(function(expId) {
+      if (!expId || !expId.length) {
+        return null;
+      }
+      return this.getLatestExpBuildId(expId, baseUrl).then(function(buildId) {
+        return [expId, buildId].join('/');
+      });
+    }.bind(this));
   }
 };
 

@@ -1,4 +1,4 @@
-extends layout
+extends _layout
 
 block content
   .container.with-fixed-header
@@ -8,7 +8,8 @@ block content
 
         for item in news
           .news-item
-            .news-item-timestamp.pull-right=moment.unix(item.timestamp).fromNow()
+            .news-item-timestamp.pull-right
+              =moment.unix(item.timestamp).fromNow()
 
             a.news-item-user(href=item.profile.profileUrl)
               img.news-item-user-avatar.img-circle(
@@ -37,7 +38,8 @@ block content
           .panel-body
               if !exps || !exps.length
                 p You haven't created any experiments yet. Launch your first today.
-              a.btn.btn-default.btn-block.btn-primary.btn-sm(href='/new-exp') New
+              a.btn.btn-default.btn-block.btn-primary.btn-sm(href='/new-exp').
+                New Experiment
             
           if exps && exps.length
             ul.list-group

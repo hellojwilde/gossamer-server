@@ -35,7 +35,7 @@ IndexRoutes.prototype = {
 
   getIndex: function(req, res) {
     if (!req.isAuthenticated()) {
-      renderWithDefaults(req, res, 'placeholder');
+      renderWithDefaults(req, res, 'login-index');
       return;
     }
 
