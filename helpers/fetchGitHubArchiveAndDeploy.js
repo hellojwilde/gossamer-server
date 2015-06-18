@@ -1,4 +1,3 @@
-var config = require('../config');
 var fs = require('fs');
 var gunzip = require('gunzip-maybe');
 var mkdirp = require('mkdirp');
@@ -10,7 +9,7 @@ var replaceStream = require('replacestream');
 
 var Promise = require('bluebird');
 
-function fetchGithubArchiveAndDeploy(expId, buildId, archiveUrl, apiBaseUrl) {
+function fetchGithubArchiveAndDeploy(expId, buildId, archiveUrl, apiBaseUrl, config) {
   var buildPath = path.join(config.buildsPath, expId, ''+buildId);
   var extract = tar.extract();
 

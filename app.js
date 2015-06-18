@@ -85,7 +85,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // routes setup
-app.use('/', new IndexRoutes(model, github).router);
+app.use('/', new IndexRoutes(model, github, config).router);
 app.use('/my', new BuildRoutes(model, config).router);
 app.use('/user', new UserRoutes().router);
 app.use('/api/v1', new APIRoutes(model).router);

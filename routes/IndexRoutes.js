@@ -2,10 +2,11 @@ var express = require('express');
 var ensureAuthenticated = require('../helpers/ensureAuthenticated');
 var renderWithDefaults = require('../helpers/renderWithDefaults');
 var fetchGitHubArchiveAndDeploy = require('../helpers/fetchGitHubArchiveAndDeploy');
+var getBaseUrl = require('../helpers/getBaseUrl');
 
 var Promise = require('bluebird');
 
-function IndexRoutes(model, github) {
+function IndexRoutes(model, github, config) {
   var router = express.Router();
 
   router.get('/', this.getIndex.bind(this));
@@ -17,6 +18,7 @@ function IndexRoutes(model, github) {
   this.router = router;
   this.model = model;
   this.github = github;
+  this.config = config;
 }
 
 IndexRoutes.prototype = {
@@ -183,7 +185,8 @@ IndexRoutes.prototype = {
               req.params.expId, 
               id, 
               archiveUrl,
-              req.protocol + '://' + req.get('host')
+              req.protocol + '://' + req.get('host'),
+              config
             ).return(id);
           }),
         this.model.getExpById(req.params.expId),
