@@ -26,7 +26,7 @@ var RedisStore = require('connect-redis')(session);
 var config = require(process.env.CONFIG_FILE || './config');
 
 var app = express();
-var redis = new Redis();
+var redis = new Redis(config.redisUrl);
 var github = new GithubApi({version: '3.0.0'});
 var model = new Model(redis);
 
