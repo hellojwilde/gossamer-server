@@ -5,7 +5,7 @@
  */
 
 var app = require('../app');
-var debug = require('debug')('gossamer-lab:server');
+var debug = require('debug')('gossamer-server');
 var http = require('http');
 
 /**

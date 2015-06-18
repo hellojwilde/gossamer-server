@@ -1,10 +1,9 @@
 var express = require('express');
 var ensureAuthenticated = require('../helpers/ensureAuthenticated');
 var renderWithDefaults = require('../helpers/renderWithDefaults');
-var config = require('../config');
 var path = require('path');
 
-function BuildRoutes(model) {
+function BuildRoutes(model, config) {
   var router = express.Router();
 
   router.get('/manifest.webapp', this.getManifest.bind(this));
@@ -12,6 +11,7 @@ function BuildRoutes(model) {
   router.post('/index.html', ensureAuthenticated, this.postIndex.bind(this));
   router.get('/*', ensureAuthenticated, this.getBuildFile.bind(this));
 
+  this.config = config;
   this.model = model;
   this.router = router;
 }
@@ -83,7 +83,7 @@ BuildRoutes.prototype = {
         }
 
         express.static(
-          path.join(config.buildsPath, buildId)
+          path.join(this.config.buildsPath, buildId)
         )(req, res, function(){res.end();});
       });
   }

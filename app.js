@@ -1,6 +1,5 @@
 var assign = require('lodash.assign');
 var bodyParser = require('body-parser');
-var config = require('./config');
 var cookieParser = require('cookie-parser');
 var express = require('express');
 var favicon = require('serve-favicon');
@@ -23,6 +22,8 @@ var IndexRoutes = require('./routes/IndexRoutes');
 var UserRoutes = require('./routes/UserRoutes');
 var BuildRoutes = require('./routes/BuildRoutes');
 var RedisStore = require('connect-redis')(session);
+
+var config = require(process.env.CONFIG_FILE || './config');
 
 var app = express();
 var redis = new Redis();
@@ -53,7 +54,7 @@ passport.use(new GithubStrategy(
   },
   function(accessToken, _refreshToken, profile, done) {
     doneify(
-      fetchGitHubUserVouch(github, accessToken)
+      fetchGitHubUserVouch(github, accessToken, config.mozilliansApiKey)
         .then(function(isVouched) {
           return model.putUser(profile, accessToken, isVouched)
         }),
@@ -85,7 +86,7 @@ app.use(passport.session());
 
 // routes setup
 app.use('/', new IndexRoutes(model, github).router);
-app.use('/my', new BuildRoutes(model).router);
+app.use('/my', new BuildRoutes(model, config).router);
 app.use('/user', new UserRoutes().router);
 app.use('/api/v1', new APIRoutes(model).router);
 

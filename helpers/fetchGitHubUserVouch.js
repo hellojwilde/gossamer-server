@@ -1,15 +1,14 @@
 var querystring = require('querystring');
 var request = require('request');
-var config = require('../config');
 
 var Promise = require('bluebird');
 
 // github+mozillians vouching
 
-function fetchGitHubUserVouch(github, accessToken) {
+function fetchGitHubUserVouch(github, accessToken, mozilliansApiKey) {
   return Promise.map(
     fetchGitHubVerifiedEmails(github, accessToken),
-    fetchVouch
+    fetchVouch.bind(null, mozilliansApiKey)
   ).then(function(vouches) {
     return vouches.indexOf(true) !== -1;
   });
@@ -32,11 +31,11 @@ function fetchGitHubVerifiedEmails(github, accessToken) {
   });
 }
 
-function fetchVouch(email) {
+function fetchVouch(mozilliansApiKey, email) {
   var url = (
     'https://mozillians.org/api/v2/users/?' +
     querystring.stringify({
-      'api-key': config.mozilliansApiKey, 
+      'api-key': mozilliansApiKey, 
       'email': email, 
       'is_vouched': 'true'
     })
