@@ -185,10 +185,10 @@ IndexRoutes.prototype = {
               req.params.expId, 
               id, 
               archiveUrl,
-              req.protocol + '://' + req.get('host'),
-              config
+              getBaseUrl(req),
+              this.config
             ).return(id);
-          }),
+          }.bind(this)),
         this.model.getExpById(req.params.expId),
       ]).then(function(results) {
         return this.model.putNewsItem(
