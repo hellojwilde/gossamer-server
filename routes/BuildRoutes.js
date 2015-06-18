@@ -8,25 +8,15 @@ function BuildRoutes(model) {
   var router = express.Router();
 
   router.get('/manifest.webapp', this.getManifest.bind(this));
-  router.get('/index.html', ensureAuthenticated, this.getIndex.bind(this));
-  router.get('/*', ensureAuthenticated, this._ensureExperiment.bind(this), this.getBuildFile.bind(this));
+  router.get('/index.html', this.getIndex.bind(this));
+  router.post('/index.html', ensureAuthenticated, this.postIndex.bind(this));
+  router.get('/*', ensureAuthenticated, this.getBuildFile.bind(this));
 
   this.model = model;
   this.router = router;
 }
 
 BuildRoutes.prototype = {
-  _ensureExperiment: function(req, res, next) {
-    this.model.getMyExpBuildId(req.user.username).then(function(buildId) {
-      if (buildId) {
-        req.buildId = buildId;
-        next();
-      } else {
-        res.end();
-      }
-    })
-  },
-
   getManifest: function(req, res) {
     res.json({
       "name": "Browser.html",
@@ -53,18 +43,49 @@ BuildRoutes.prototype = {
   },
 
   getIndex: function(req, res) {
-    if (req.buildId) {
-      this.getBuildFile(req, res);
+    if (!req.isAuthenticated()) {
+      renderWithDefaults(req, res, 'build/login-index');
       return;
     }
 
-    res.json({hi: true});
+    this.model.getMyExpBuildId(req.user.username)
+      .then(function(buildId) {
+        if (!buildId) {
+          this.model.getAllExpsWithBuilds()
+            .then(function(exps){
+              renderWithDefaults(req, res, 'build/index', {exps: exps});
+            });
+          return;
+        }
+
+        this.getBuildFile(req, res);
+      }.bind(this));
+  },
+
+  postIndex: function(req, res) {
+    if (!req.body.expId) {
+      this.getIndex(req, res);
+      return;
+    }
+
+    this.model.putMyExp(req.user.username, req.body.expId)
+      .then(function() {
+        res.redirect('/my/index.html');
+      }.bind(this));
   },
 
   getBuildFile: function(req, res) {
-    express.static(
-      path.join(config.buildsPath, req.buildId)
-    )(req, res, function(){res.end();});
+    this.model.getMyExpBuildId(req.user.username)
+      .then(function(buildId) {
+        if (!buildId) {
+          res.end();
+          return;
+        }
+
+        express.static(
+          path.join(config.buildsPath, buildId)
+        )(req, res, function(){res.end();});
+      });
   }
 };
 

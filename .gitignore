@@ -33,4 +33,4 @@ config.js
 .DS_Store
 
 # All deployed builds.
-public/builds
+builds

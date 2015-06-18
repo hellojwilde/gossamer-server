@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon --ignore ./public/builds/ ./bin/www"
+    "start": "nodemon --ignore ./builds/ ./bin/www"
   },
   "dependencies": {
     "bluebird": "^2.9.27",

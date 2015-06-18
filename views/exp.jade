@@ -1,3 +1,4 @@
+include _mixins
 extends _layout
 
 block content
@@ -50,12 +51,7 @@ block content
                       = ' ' +build.commit.commit.message.slice(0, 50)
 
                   .clearfix
-                    a(href=build.profile.profileUrl)
-                      img.build-user-avatar.img-circle(
-                        src=build.profile._json.avatar_url, 
-                        alt=build.profile.displayName + ' Avatar'
-                      )
-                    span.build-timestamp=moment.unix(build.timestamp).fromNow()
+                    +action-info(build.profile, build.timestamp)
 
                   
 

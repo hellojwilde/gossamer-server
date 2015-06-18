@@ -121,12 +121,18 @@ a.exp:hover .exp-name {
   display: block;
 }
 
-.build-user-avatar {
+.list-group-item > .radio {
+  margin: 0;
+}
+
+/* mixin action-info */
+
+.action-info-user-avatar {
   width: 24px;
   margin-right: 5px
 }
 
-.build-timestamp {
+.action-info-timestamp {
   color: #999;
   line-height: 30px;
 }

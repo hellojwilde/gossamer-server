@@ -91,6 +91,13 @@ Model.prototype = {
     return this._redis.sismember(getUserKey(username, 'exps'), id);
   },
 
+  getAllExpsWithBuilds: function() {
+    return Promise.map(
+      this._redis.zrevrange('gos:exps', 0, -1),
+      this.getExpById.bind(this)
+    );
+  },
+
   getExpsByUsername: function(username) {
     return Promise.map(
       this._redis.smembers(getUserKey(username, 'exps')),
@@ -99,11 +106,20 @@ Model.prototype = {
   },
 
   putExpBuild: function(profile, id, commit) {
-    return this._redis.rpush(getExpKey(id, 'builds'), JSON.stringify({
-      profile: profile,
-      commit: commit,
-      timestamp: getUnixTimestamp()
-    }));
+    var timestamp = getUnixTimestamp();
+
+    return (
+      this._redis.multi()
+        .rpush(getExpKey(id, 'builds'), JSON.stringify({
+          profile: profile,
+          commit: commit,
+          timestamp: timestamp
+        }))
+        .zadd('gos:exps', timestamp, id)
+        .exec()
+    ).then(function(results) {
+      return results[0][1];
+    });
   },
 
   getLatestExpBuildId: function(expId) {
@@ -117,14 +133,6 @@ Model.prototype = {
         return assign(JSON.parse(value), {id: index+1});
       }
     );
-  },
-
-  putExpBuildOutput: function(expId, id, output) {
-    return this._redis.rpush(getExpKey(expId, 'builds:' + id), output);
-  },
-
-  getAllExpBuildOutput: function(expId, id) {
-    return this._redis.lrange(getExpKey(expId, 'builds:' + id), 0, -1);
   },
 
   putExpEvents: function(id, events) {
@@ -150,7 +158,7 @@ Model.prototype = {
   },
 
   putNewsItem: function(profile, details) {
-    return this._redis.pipeline()
+    return this._redis.multi()
       .lpush(getNewsKey(), JSON.stringify({
         profile: profile,
         details: details,
@@ -167,8 +175,8 @@ Model.prototype = {
     );
   },
 
-  putMyExp: function(username) {
-    return this._redis.set(getUserKey(username, 'my'));
+  putMyExp: function(username, expId) {
+    return this._redis.set(getUserKey(username, 'my'), expId);
   },
 
   getMyExp: function(username) {
@@ -177,7 +185,7 @@ Model.prototype = {
 
   getMyExpBuildId: function(username, baseUrl) {
     return this.getMyExp(username).then(function(expId) {
-      if (!expId || !expId.length) {
+      if (!expId) {
         return null;
       }
       return this.getLatestExpBuildId(expId, baseUrl).then(function(buildId) {

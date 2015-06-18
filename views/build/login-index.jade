@@ -1,0 +1,14 @@
+extends ../_modal
+
+block content
+  .panel-body
+    p.lead.
+      Welcome to Gossamer, a place to try experimental browser features.
+    ul
+      li Only verified <a href="http://mozillians.org">Mozillians</a> can publish experiments here.
+      li Gossamer sends anonymous metrics about usage, performance, and errors to experimenters.
+      li Your session (e.g. history, bookmarks) in Gossamer is separate from your normal browser session.
+    p Ready to get started?
+    a.btn.btn-lg.btn-default.btn-primary.btn-block(
+      href='/user/oauth?redirect=' + encodeURIComponent('/my/index.html')
+    ) Log in with GitHub

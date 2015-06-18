@@ -1,3 +1,4 @@
+include _mixins
 extends _layout
 
 block content
@@ -46,15 +47,8 @@ block content
               each exp in exps
                 li.list-group-item
                   a.exp(href='/exp/' + exp.id)
-                    .exp-name= exp.title
-                    .exp-details
-                      span.exp-details-item
-                        span.glyphicon.glyphicon-book
-                        = exp.owner + '/' + exp.repo
-
-                      span.exp-details-item
-                        span.glyphicon.glyphicon-bookmark
-                        = exp.branch
+                    +exp-info(exp)
+                  
 
 
 
