@@ -1,4 +1,3 @@
-var assign = require('lodash.assign');
 var getUnixTimestamp = require('./helpers/getUnixTimestamp');
 
 var Promise = require('bluebird');
@@ -142,7 +141,7 @@ Model.prototype = {
     return Promise.map(
       this._redis.lrange(getExpKey(id, 'builds'), 0, -1),
       function(value, index) {
-        return assign(JSON.parse(value), {id: index+1});
+        return Object.assign(JSON.parse(value), {id: index+1});
       }
     );
   },

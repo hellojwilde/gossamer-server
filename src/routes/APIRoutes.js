@@ -1,5 +1,4 @@
 var express = require('express');
-var assign = require('lodash.assign');
 var getBaseUrl = require('../helpers/getBaseUrl');
 
 function ensureAPIAuthenticated(req, res, next) {
@@ -15,7 +14,7 @@ function sendAPISuccess(res, data) {
 function sendAPIError(res, error, optErrorCode, optDetails) {
   res.set('Access-Control-Allow-Origin', '*');
   res.status(optErrorCode || 500);
-  res.json(assign({}, {error: error, details: optDetails}));
+  res.json(Object.assign({}, {error: error, details: optDetails}));
 }
 
 function sendify(promised, res) {
