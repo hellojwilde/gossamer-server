@@ -23,7 +23,7 @@ var UserRoutes = require('./routes/UserRoutes');
 var BuildRoutes = require('./routes/BuildRoutes');
 var RedisStore = require('connect-redis')(session);
 
-var config = require(process.env.CONFIG_FILE || './config');
+var config = require(path.join('..', process.env.CONFIG_FILE || 'config'));
 
 var app = express();
 var redis = new Redis(config.redisUrl);
