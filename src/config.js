@@ -10,7 +10,7 @@ module.exports = {
   amqpUrl: process.env.CLOUDAMQP_URL || 'amqp://localhost',
 
   /**
-   * build worker configuration
+   * build configuration
    */
   buildsPath: path.join(__dirname, 'builds'),
 

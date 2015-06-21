@@ -12,22 +12,22 @@ var fetchGitHubUserVouch = require('./helpers/fetchGitHubUserVouch');
 var renderWithDefaults = require('./helpers/renderWithDefaults');
 var doneify = require('./helpers/doneify');
 
-var GithubStrategy = require('passport-github').Strategy;
-var GithubApi = require('github');
-var Redis = require('ioredis');
-var Promise = require('bluebird');
-var Model = require('./model');
 var APIRoutes = require('./routes/APIRoutes');
-var IndexRoutes = require('./routes/IndexRoutes');
-var UserRoutes = require('./routes/UserRoutes');
 var BuildRoutes = require('./routes/BuildRoutes');
-var RedisStore = require('connect-redis')(session);
+var GithubApi = require('github');
+var GithubStrategy = require('passport-github').Strategy;
+var IndexRoutes = require('./routes/IndexRoutes');
+var Model = require('./model');
+var Promise = require('bluebird');
+var Redis = require('ioredis');
+var RedisSessionStore = require('connect-redis')(session);
+var UserRoutes = require('./routes/UserRoutes');
 
 function web(config) {
   var app = express();
   var redis = new Redis(config.redisUrl);
   var github = new GithubApi({version: '3.0.0'});
-  var model = new Model(redis);
+  var model = new Model(config, redis);
 
   // authentication setup
   passport.serializeUser(function(user, done) {
@@ -73,7 +73,7 @@ function web(config) {
     resave: false,
     saveUninitialized: false,
     secret: config.sessionSecret,
-    store: new RedisStore({client: redis, prefix: 'gos:sess:'})
+    store: new RedisSessionStore({client: redis, prefix: 'gos:sess:'})
   }));
   app.use(passport.initialize());
   app.use(passport.session());
