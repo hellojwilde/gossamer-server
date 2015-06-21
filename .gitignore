@@ -26,11 +26,11 @@ build/Release
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
 
-# Our configuration with private keys and the like
-config.js
-
 # The awful Mac OS X thumbnail file
 .DS_Store
 
 # All deployed builds.
 builds
+
+# User .env configuration
+.env
