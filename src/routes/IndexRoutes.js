@@ -2,11 +2,10 @@ var express = require('express');
 var ensureAuthenticated = require('../helpers/ensureAuthenticated');
 var renderWithDefaults = require('../helpers/renderWithDefaults');
 var fetchGitHubArchiveAndDeploy = require('../helpers/fetchGitHubArchiveAndDeploy');
-var getBaseUrl = require('../helpers/getBaseUrl');
 
 var Promise = require('bluebird');
 
-function IndexRoutes(model, github, config) {
+function IndexRoutes(config, model, github) {
   var router = express.Router();
 
   router.get('/', this.getIndex.bind(this));
@@ -16,9 +15,9 @@ function IndexRoutes(model, github, config) {
   router.post('/exp/:expId/ship', ensureAuthenticated, this._ensureVouched.bind(this), this._ensureCollaborator.bind(this), this.postExpShip.bind(this));
 
   this.router = router;
+  this.config = config;
   this.model = model;
   this.github = github;
-  this.config = config;
 }
 
 IndexRoutes.prototype = {
@@ -182,11 +181,10 @@ IndexRoutes.prototype = {
         this.model.putExpBuild(req.user.profile, req.params.expId, commit)
           .then(function(id) {
             return fetchGitHubArchiveAndDeploy(
+              this.config,
               req.params.expId, 
               id, 
-              archiveUrl,
-              getBaseUrl(req),
-              this.config
+              archiveUrl
             ).return(id);
           }.bind(this)),
         this.model.getExpById(req.params.expId),

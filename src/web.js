@@ -79,10 +79,10 @@ function web(config) {
   app.use(passport.session());
 
   // routes setup
-  app.use('/', new IndexRoutes(model, github, config).router);
-  app.use('/my', new BuildRoutes(model, config).router);
-  app.use('/user', new UserRoutes().router);
-  app.use('/api/v1', new APIRoutes(model).router);
+  app.use('/', new IndexRoutes(config, model, github).router);
+  app.use('/my', new BuildRoutes(config, model).router);
+  app.use('/user', new UserRoutes(config).router);
+  app.use('/api/v1', new APIRoutes(config, model).router);
 
   // apply error handlers
 

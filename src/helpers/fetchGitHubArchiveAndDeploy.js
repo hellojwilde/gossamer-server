@@ -9,7 +9,7 @@ var replaceStream = require('replacestream');
 
 var Promise = require('bluebird');
 
-function fetchGithubArchiveAndDeploy(expId, buildId, archiveUrl, apiBaseUrl, config) {
+function fetchGithubArchiveAndDeploy(config, expId, buildId, archiveUrl) {
   var buildPath = path.join(config.buildsPath, expId, ''+buildId);
   var extract = tar.extract();
 
@@ -28,7 +28,7 @@ function fetchGithubArchiveAndDeploy(expId, buildId, archiveUrl, apiBaseUrl, con
           .pipe(replaceStream(
             '{/* INJECTED_UPDATER_INFO */}',
             JSON.stringify({
-              latestBuildIdUrl: apiBaseUrl + '/api/v1/my/latest',
+              latestBuildIdUrl: config.publicUrl + '/api/v1/my/latest',
               buildId: [expId, buildId].join('/')
             })
           ))

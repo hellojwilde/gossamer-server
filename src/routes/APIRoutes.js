@@ -1,5 +1,4 @@
 var express = require('express');
-var getBaseUrl = require('../helpers/getBaseUrl');
 
 function ensureAPIAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {return next();}
@@ -24,7 +23,7 @@ function sendify(promised, res) {
   );
 }
 
-function APIRoutes(model) {
+function APIRoutes(config, model) {
   var router = express.Router();
 
   router.get('/my/latest', ensureAPIAuthenticated, this.getMyExpLatestBuild.bind(this));
@@ -32,12 +31,16 @@ function APIRoutes(model) {
   router.post('/my/events', ensureAPIAuthenticated, this.postMyExpEvents.bind(this));
 
   this.router = router;
+  this.config = config;
   this.model = model;
 }
 
 APIRoutes.prototype = {
   getMyExpLatestBuild: function(req, res) {
-    sendify(this.model.getMyExpBuildId(req.user.username, getBaseUrl(req)), res);
+    sendify(this.model.getMyExpBuildId(
+      req.user.username, 
+      this.config.publicUrl
+    ), res);
   },
 
   postMyExp: function(req, res) {

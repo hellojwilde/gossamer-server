@@ -3,7 +3,7 @@ var ensureAuthenticated = require('../helpers/ensureAuthenticated');
 var renderWithDefaults = require('../helpers/renderWithDefaults');
 var path = require('path');
 
-function BuildRoutes(model, config) {
+function BuildRoutes(config, model) {
   var router = express.Router();
 
   router.get('/manifest.webapp', this.getManifest.bind(this));
