@@ -30,6 +30,10 @@ function Model(redis) {
 }
 
 Model.prototype = {
+  /**
+   * Users
+   */
+
   putUser: function(profile, accessToken, isVouched) {
     var writePromise = this._redis.multi()
       .set(getUserKey(profile.username, 'accessToken'), accessToken)
@@ -54,6 +58,10 @@ Model.prototype = {
       accessToken: this._redis.get(getUserKey(username, 'accessToken'))
     });
   },
+
+  /**
+   * Experiments
+   */
 
   putExp: function(owner, repo, branch, collaborators, title) {
     var id = this.getExpId(owner, repo, branch);
@@ -105,6 +113,10 @@ Model.prototype = {
     );
   },
 
+  /**
+   * Experiments: Builds
+   */
+
   putExpBuild: function(profile, id, commit) {
     var timestamp = getUnixTimestamp();
 
@@ -135,6 +147,10 @@ Model.prototype = {
     );
   },
 
+  /**
+   * Experiments: Analytics
+   */
+
   putExpEvents: function(id, events) {
     var keySet = {};
 
@@ -157,6 +173,10 @@ Model.prototype = {
     return this._redis.smembers(getExpKey(id, 'eventTypes'));
   },
 
+  /**
+   * News Feed
+   */
+
   putNewsItem: function(profile, details) {
     return this._redis.multi()
       .lpush(getNewsKey(), JSON.stringify({
@@ -174,6 +194,10 @@ Model.prototype = {
       JSON.parse
     );
   },
+
+  /**
+   * My Build 
+   */
 
   putMyExp: function(username, expId) {
     return this._redis.set(getUserKey(username, 'my'), expId);
