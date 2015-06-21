@@ -23,6 +23,7 @@
     "morgan": "~1.5.3",
     "passport": "^0.2.2",
     "passport-github": "^0.1.5",
+    "randomstring": "^1.0.6",
     "redis": "^0.12.1",
     "redis-timeseries": "^0.4.0",
     "replacestream": "^2.1.0",

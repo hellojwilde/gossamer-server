@@ -1,7 +1,8 @@
 var path = require('path');
-var url = require('url');
+var randomstring = require('randomstring');
 
 module.exports = {
+  instanceId: randomstring.generate(),
   buildsPath: path.join(__dirname, 'builds'),
   sessionSecret: process.env.SESSION_SECRET,
   mozilliansApiKey: process.env.MOZILLIANS_API_KEY,
