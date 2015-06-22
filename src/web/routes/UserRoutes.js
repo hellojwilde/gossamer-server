@@ -1,50 +1,39 @@
-var express = require('express');
-var passport = require('passport');
-var querystring = require('querystring');
-var renderWithDefaults = require('../helpers/renderWithDefaults');
+let express = require('express');
+let passport = require('passport');
+let querystring = require('querystring');
+let renderWithDefaults = require('../helpers/renderWithDefaults');
 
-function UserRoutes() {
-  var router = express.Router();
+let Routes = require('../helpers/Routes');
 
-  router.get('/login', this.getLogin);
-  router.get('/logout', this.getLogout);
-  router.get('/oauth', this.getOAuth);
-  router.get('/oauth/callback', this.getOAuthComplete);
+let routes = new Routes();
 
-  this.router = router;
-}
+routes.get('/login', function(req, res) {
+  renderWithDefaults(req, res, 'login', {
+    url: '/user/oauth?' + querystring.stringify({
+      redirect: req.query.redirect
+    })
+  });
+});
 
-UserRoutes.prototype = {
-  getLogin: function(req, res) {
-    renderWithDefaults(req, res, 'login', {
-      url: '/user/oauth?' + querystring.stringify({
-        redirect: req.query.redirect
-      })
-    });
-  },
+routes.get('/logout', function(req, res) {
+  req.logout();
+  res.redirect('/');
+});
 
-  getLogout: function(req, res) {
-    req.logout();
-    res.redirect('/');
-  },
+routes.get('/oauth', function(req, res, next) {
+  passport.authenticate('github', {
+    failureRedirect: '/user/login',
+    scope: ['user:email', 'public_repo'],
+    state: JSON.stringify({redirect: req.query.redirect})
+  })(req, res, next);
+});
 
-  getOAuth: function(req, res) {
-    passport.authenticate('github', {
-      failureRedirect: '/user/login',
-      scope: ['user:email', 'public_repo'],
-      state: JSON.stringify({redirect: req.query.redirect})
-    })(req, res);
-  },
+routes.get('/oauth/callback', passport.authenticate('github', {
+  failureRedirect: '/user/login'
+}), function(req, res) {
+  // TODO: Make sure we validate this URL before doing any redirects.
+  let state = JSON.parse(req.query.state);
+  res.redirect(state.redirect || '/');
+});
 
-  getOAuthComplete: function(req, res) {
-    passport.authenticate('github', {
-      failureRedirect: '/user/login'
-    })(req, res, function(req, res) {
-      // TODO: Make sure we validate this URL before doing any redirects.
-      var state = JSON.parse(req.query.state);
-      res.redirect(state.redirect ? state.redirect : '/');
-    }.bind(null, req, res));
-  }
-}
-
-module.exports = UserRoutes;
+module.exports = routes;

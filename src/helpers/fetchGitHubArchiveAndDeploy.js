@@ -12,6 +12,7 @@ var Promise = require('bluebird');
 function fetchGitHubArchiveAndDeploy(config, expId, buildId, archiveUrl) {
   var buildPath = path.join(config.buildsPath, expId, ''+buildId);
   var extract = tar.extract();
+  
   var filesPromise = new Promise(function(resolve, reject) {
     extract.on('entry', function(header, stream, next) {
       var partialPath = header.name.split(path.sep).slice(1).join(path.sep);

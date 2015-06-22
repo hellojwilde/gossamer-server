@@ -3,90 +3,77 @@ var ensureAuthenticated = require('../helpers/ensureAuthenticated');
 var renderWithDefaults = require('../helpers/renderWithDefaults');
 var path = require('path');
 
-function BuildRoutes(config, model) {
-  var router = express.Router();
+var Routes = require('../helpers/Routes');
 
-  router.get('/manifest.webapp', this.getManifest.bind(this));
-  router.get('/index.html', this.getIndex.bind(this));
-  router.post('/index.html', ensureAuthenticated, this.postIndex.bind(this));
-  router.get('/*', ensureAuthenticated, this.getBuildFile.bind(this));
+function sendFileForBuildId(buildId, req, res, next) {
+  console.log('sfbi', buildId, path.join(this.config.buildsPath, buildId))
 
-  this.config = config;
-  this.model = model;
-  this.router = router;
+  express.static(
+    path.join(this.config.buildsPath, buildId)
+  )(req, res, next);
 }
 
-BuildRoutes.prototype = {
-  getManifest: function(req, res) {
-    res.json({
-      "name": "Browser.html",
-      "version": "0.0.2",
-      "description": "Browser.html",
-      "launch_path": "./index.html",
-      "type": "certified",
-      "role": "system",
-      "developer": {
-        "name": "Mozilla",
-        "url": "https://mozilla.org"
-      },
-      "permissions": {
-        "browser": {},
-        "embed-apps": {},
-        "systemXHR": {},
-        "settings": {"access": "readwrite"},
-        "geolocation" : {},
-        "desktop-notification": {},
-        "audio-capture": {},
-        "video-capture": {}
-      }
-    });
-  },
+let routes = new Routes();
 
-  getIndex: function(req, res) {
-    if (!req.isAuthenticated()) {
-      renderWithDefaults(req, res, 'build/login-index');
-      return;
+routes.get('/manifest.webapp', function(req, res) {
+  res.json({
+    "name": "Browser.html",
+    "version": "0.0.2",
+    "description": "Browser.html",
+    "launch_path": "./index.html",
+    "type": "certified",
+    "role": "system",
+    "developer": {
+      "name": "Mozilla",
+      "url": "https://mozilla.org"
+    },
+    "permissions": {
+      "browser": {},
+      "embed-apps": {},
+      "systemXHR": {},
+      "settings": {"access": "readwrite"},
+      "geolocation" : {},
+      "desktop-notification": {},
+      "audio-capture": {},
+      "video-capture": {}
     }
+  });
+});
 
-    this.model.getMyExpBuildId(req.user.username)
-      .then(function(buildId) {
-        if (!buildId) {
-          this.model.getAllExpsWithBuilds()
-            .then(function(exps){
-              renderWithDefaults(req, res, 'build/index', {exps: exps});
-            });
-          return;
-        }
-
-        this.getBuildFile(req, res);
-      }.bind(this));
-  },
-
-  postIndex: function(req, res) {
-    if (!req.body.expId) {
-      this.getIndex(req, res);
-      return;
-    }
-
-    this.model.putMyExp(req.user.username, req.body.expId)
-      .then(function() {
-        res.redirect('/my/index.html');
-      }.bind(this));
-  },
-
-  getBuildFile: function(req, res) {
-    this.model.getMyExpBuildId(req.user.username)
-      .then(function(buildId) {
-        if (!buildId) {
-          res.end();
-          return;
-        }
-
-        express.static(
-          path.join(this.config.buildsPath, buildId)
-        )(req, res, function(){res.end();});
-      });
+routes.get('/index.html', async function(req, res) {
+  if (!req.isAuthenticated()) {
+    renderWithDefaults(req, res, 'build/login-index');
+    return;
   }
-};
 
-module.exports = BuildRoutes;
+  let buildId = await this.model.getMyExpBuildId(req.user.username);
+
+  if (!buildId) {
+    let exps = await this.model.getAllExpsWithBuilds();
+    renderWithDefaults(req, res, 'build/index', {exps});
+    return;
+  }
+
+  sendFileForBuildId.call(this, buildId, req, res);
+});
+
+routes.post('/index.html', ensureAuthenticated, async function(req, res) {
+  if (req.body.expId) {
+    await this.model.putMyExp(req.user.username, req.body.expId);
+  }
+
+  res.redirect('/my/index.html');
+});
+
+routes.get('/*', ensureAuthenticated, async function(req, res) {
+  let buildId = await this.model.getMyExpBuildId(req.user.username)
+
+  if (!buildId) {
+    res.end();
+    return;
+  }
+
+  sendFileForBuildId.call(this, buildId, req, res);
+});
+
+module.exports = routes;

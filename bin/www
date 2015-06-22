@@ -3,15 +3,17 @@
 require('babel/register')({stage: 0});
 require('dotenv').load();
 
-var config = require('../src/config');
-var web = require('../src/web');
+var app = require('../src/app');
+var config = require('../config');
 var http = require('http');
+var web = require('../src/web');
 
-var server = http.createServer(web(config));
-
-server.listen(config.port);
-server.on('error', onError);
-server.on('listening', onListening);
+app(config).then(function(registry) {
+  var server = http.createServer(web(registry));
+  server.listen(registry.config.port);
+  server.on('error', onError);
+  server.on('listening', onListening);
+});
 
 function onError(error) {
   if (error.syscall !== 'listen') {

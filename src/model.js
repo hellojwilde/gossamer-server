@@ -7,14 +7,6 @@ function getUnixTimestamp() {
   return Math.floor(new Date() / 1000);
 }
 
-function getKey(...parts) {
-  return ['gos'].concat(parts).join(':');
-}
-
-function getKeyPrefix(...parts) {
-  return getKey(...parts) + ':';
-}
-
 function Model(config, redis) {
   this.config = config;
   this.redis = redis;
@@ -23,31 +15,41 @@ function Model(config, redis) {
 
 Model.prototype = {
   /**
+   * Keys
+   */
+  
+  getKey: function(...parts) {
+    return ['gos'].concat(parts).join(':');
+  },
+
+  getKeyPrefix: function(...parts) {
+    return this.getKey(...parts) + ':';
+  },
+
+  /**
    * Users
    */
 
-  putUser: function(profile, accessToken, isVouched) {
-    var writePromise = this.redis.multi()
-      .set(getKey('user', profile.username, 'accessToken'), accessToken)
-      .set(getKey('user', profile.username, 'isVouched'), isVouched)
-      .set(getKey('user', profile.username), JSON.stringify(profile))
+  putUser: async function(profile, accessToken, isVouched) {
+    await this.redis.multi()
+      .set(this.getKey('user', profile.username, 'accessToken'), accessToken)
+      .set(this.getKey('user', profile.username, 'isVouched'), isVouched)
+      .set(this.getKey('user', profile.username), JSON.stringify(profile))
       .exec();
 
-    return writePromise.then(function() {
-      return {
-        username: profile.username,
-        profile: profile,
-        isVouched: isVouched
-      };
-    });
+    return {
+      username: profile.username,
+      profile: profile,
+      isVouched: isVouched
+    };
   },
 
-  getUserByUsername: function(username) {
+  getUser: function(username) {
     return Promise.props({
       username: username,
-      profile: this.redis.get(getKey('user', username)).then(JSON.parse),
-      isVouched: this.redis.get(getKey('user', username, 'isVouched')),
-      accessToken: this.redis.get(getKey('user', username, 'accessToken'))
+      profile: this.redis.get(this.getKey('user', username)).then(JSON.parse),
+      isVouched: this.redis.get(this.getKey('user', username, 'isVouched')),
+      accessToken: this.redis.get(this.getKey('user', username, 'accessToken'))
     });
   },
 
@@ -66,10 +68,10 @@ Model.prototype = {
     };
 
     var transaction = this.redis.multi()
-      .hmset(getKey('exp', id), exp);
+      .hmset(this.getKey('exp', id), exp);
 
     collaborators.forEach(function(collaborator) {
-      transaction.sadd(getKey('user', collaborator, 'exps'), id);
+      transaction.sadd(this.getKey('user', collaborator, 'exps'), id);
     });
 
     return transaction.exec().return(exp);
@@ -80,15 +82,15 @@ Model.prototype = {
   },
 
   haveExpById: function(id) {
-    return this.redis.exists(getKey('exp', id));
+    return this.redis.exists(this.getKey('exp', id));
   },
 
   getExpById: function(id) {
-    return this.redis.hgetall(getKey('exp', id));
+    return this.redis.hgetall(this.getKey('exp', id));
   },
 
   haveExpByUsernameId: function(username, id) {
-    return this.redis.sismember(getKey('user', username, 'exps'), id);
+    return this.redis.sismember(this.getKey('user', username, 'exps'), id);
   },
 
   getAllExpsWithBuilds: function() {
@@ -100,7 +102,7 @@ Model.prototype = {
 
   getExpsByUsername: function(username) {
     return Promise.map(
-      this.redis.smembers(getKey('user', username, 'exps')),
+      this.redis.smembers(this.getKey('user', username, 'exps')),
       this.getExpById.bind(this)
     );
   },
@@ -110,11 +112,11 @@ Model.prototype = {
    */
 
   putExpBuildLock: function(expId) {
-    return this.redis.set(getKey('exp', expId, 'build'), this.config.id, 'NX');
+    return this.redis.set(this.getKey('exp', expId, 'build'), this.config.id, 'NX');
   },
 
   delExpBuildLock: function(expId) {
-    return this.redis.del(getKey('exp', expId, 'build'));
+    return this.redis.del(this.getKey('exp', expId, 'build'));
   },
 
   putExpBuild: function(expId, profile, commit) {
@@ -122,7 +124,7 @@ Model.prototype = {
 
     return (
       this.redis.multi()
-        .rpush(getKey('exp', expId, 'builds'), JSON.stringify({
+        .rpush(this.getKey('exp', expId, 'builds'), JSON.stringify({
           profile: profile,
           commit: commit,
           timestamp: timestamp
@@ -135,12 +137,12 @@ Model.prototype = {
   },
 
   getLatestExpBuildId: function(expId) {
-    return this.redis.llen(getKey('exp', expId, 'builds'));
+    return this.redis.llen(this.getKey('exp', expId, 'builds'));
   },
 
   getAllExpBuilds: function(expId) {
     return Promise.map(
-      this.redis.lrange(getKey('exp', expId, 'builds'), 0, -1),
+      this.redis.lrange(this.getKey('exp', expId, 'builds'), 0, -1),
       function(value, index) {
         return Object.assign(JSON.parse(value), {id: index+1});
       }
@@ -162,7 +164,7 @@ Model.prototype = {
 
     return Promise.join(
       Promise.promisify(this.timeseries.exec)(),
-      this.redis.sadd(getKey('exp', id, 'eventTypes'), Object.keys(keySet))
+      this.redis.sadd(this.getKey('exp', id, 'eventTypes'), Object.keys(keySet))
     ).return({
       events: events.length,
       eventTypes: Object.keys(keySet)
@@ -170,7 +172,7 @@ Model.prototype = {
   },
 
   getExpEventTypes: function(id) {
-    return this.redis.smembers(getKey('exp', id, 'eventTypes'));
+    return this.redis.smembers(this.getKey('exp', id, 'eventTypes'));
   },
 
   /**
@@ -179,18 +181,18 @@ Model.prototype = {
 
   putNewsItem: function(profile, details) {
     return this.redis.multi()
-      .lpush(getKey('news', ), JSON.stringify({
+      .lpush(this.getKey('news', ), JSON.stringify({
         profile: profile,
         details: details,
         timestamp: getUnixTimestamp()
       }))
-      .ltrim(getKey('news', ), 0, MAX_NEWS_ITEMS)
+      .ltrim(this.getKey('news', ), 0, MAX_NEWS_ITEMS)
       .exec();
   },
 
   getAllNewsItems: function() {
     return Promise.map(
-      this.redis.lrange(getKey('news', ), 0, -1), 
+      this.redis.lrange(this.getKey('news', ), 0, -1), 
       JSON.parse
     );
   },
@@ -200,11 +202,11 @@ Model.prototype = {
    */
 
   putMyExp: function(username, expId) {
-    return this.redis.set(getKey('user', username, 'my'), expId);
+    return this.redis.set(this.getKey('user', username, 'my'), expId);
   },
 
   getMyExp: function(username) {
-    return this.redis.get(getKey('user', username, 'my'));
+    return this.redis.get(this.getKey('user', username, 'my'));
   },
 
   getMyExpBuildId: function(username, baseUrl) {

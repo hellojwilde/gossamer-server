@@ -1,4 +1,4 @@
-var express = require('express');
+var Routes = require('../helpers/Routes');
 
 function ensureAPIAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {return next();}
@@ -23,45 +23,33 @@ function sendify(promised, res) {
   );
 }
 
-function APIRoutes(config, model) {
-  var router = express.Router();
+let routes = new Routes();
 
-  router.get('/my/latest', ensureAPIAuthenticated, this.getMyExpLatestBuild.bind(this));
-  router.post('/my', ensureAPIAuthenticated, this.postMyExp.bind(this));
-  router.post('/my/events', ensureAPIAuthenticated, this.postMyExpEvents.bind(this));
+routes.get('/my/latest', ensureAPIAuthenticated, function(req, res) {
+  sendify(this.model.getMyExpBuildId(
+    req.user.username, 
+    this.config.publicUrl
+  ), res);
+});
 
-  this.router = router;
-  this.config = config;
-  this.model = model;
-}
+routes.post('/my', ensureAPIAuthenticated, async function(req, res) {
+  let buildId = await this.model.getLatestExpBuildId(req.body.expId);
 
-APIRoutes.prototype = {
-  getMyExpLatestBuild: function(req, res) {
-    sendify(this.model.getMyExpBuildId(
-      req.user.username, 
-      this.config.publicUrl
-    ), res);
-  },
-
-  postMyExp: function(req, res) {
-    this.model.getLatestExpBuildId(req.body.expId).then(function(buildId) {
-      if (!buildId) {
-        sendAPIError(res, 400, 'That expId does not have builds.');
-        return;
-      }
-      sendify(this.model.putMyExp(req.user.username, res.body.expId), res);
-    });
-  },
-
-  postMyExpEvents: function(req, res) {
-    this.model.getMyExp(req.user.username).then(function(expId) {
-      if (!expId) {
-        sendAPIError(res, 400, 'User is not enrolled in any experiments.');
-        return;
-      }
-      sendify(this.model.putExpEvents(expId, req.body.events), res);
-    });   
+  if (!buildId) {
+    sendAPIError(res, 400, 'That expId does not have builds.');
+    return;
   }
-};
+  sendify(this.model.putMyExp(req.user.username, res.body.expId), res);
+});
 
-module.exports = APIRoutes;
+routes.post('/my', ensureAPIAuthenticated, function(req, res) {
+  let expId = this.model.getMyExp(req.user.username);
+
+  if (!expId) {
+    sendAPIError(res, 400, 'User is not enrolled in any experiments.');
+    return;
+  }
+  sendify(this.model.putExpEvents(expId, req.body.events), res);
+});
+
+module.exports = routes;

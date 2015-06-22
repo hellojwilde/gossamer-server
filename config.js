@@ -6,6 +6,7 @@ module.exports = {
    * process configuration
    */
   id: randomstring.generate(),
+  dev: !!process.env.DEV,
   redisUrl: process.env.REDISCLOUD_URL || 'redis://localhost:6379',
   amqpUrl: process.env.CLOUDAMQP_URL || 'amqp://localhost',
 

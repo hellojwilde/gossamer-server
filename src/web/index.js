@@ -1,56 +1,36 @@
-var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
-var express = require('express');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var moment = require('moment');
-var passport = require('passport');
-var path = require('path');
-var session = require('express-session');
+let bodyParser = require('body-parser');
+let cookieParser = require('cookie-parser');
+let express = require('express');
+let favicon = require('serve-favicon');
+let moment = require('moment');
+let passport = require('passport');
+let path = require('path');
+let session = require('express-session');
 
-var fetchGitHubUserVouch = require('./helpers/fetchGitHubUserVouch');
-var renderWithDefaults = require('./helpers/renderWithDefaults');
-var doneify = require('./helpers/doneify');
+let errors = require('./helpers/errors');
+let logger = require('./helpers/logger');
+let renderWithDefaults = require('./helpers/renderWithDefaults');
+let {nodeify, nodeifySync} = require('./helpers/methods');
 
-var APIRoutes = require('./routes/APIRoutes');
-var BuildRoutes = require('./routes/BuildRoutes');
-var GithubStrategy = require('passport-github').Strategy;
-var IndexRoutes = require('./routes/IndexRoutes');
-var Model = require('../model');
-var Redis = require('ioredis');
-var RedisSessionStore = require('connect-redis')(session);
-var UserRoutes = require('./routes/UserRoutes');
+let APIRoutes = require('./routes/APIRoutes');
+let BuildRoutes = require('./routes/BuildRoutes');
+let GitHubStrategy = require('passport-github').Strategy;
+let IndexRoutes = require('./routes/IndexRoutes');
+let RedisSessionStore = require('connect-redis')(session);
+let UserRoutes = require('./routes/UserRoutes');
 
-function web(config) {
-  var server = express();
-  var redis = new Redis(config.redisUrl);
-  var model = new Model(config, redis);
+function web(registry) {
+  let {model, config, connections, actions} = registry;
+  let server = express();
 
   // authentication setup
-  passport.serializeUser(function(user, done) {
-    done(null, user.username);
-  });
-
-  passport.deserializeUser(function(username, done) {
-    doneify(model.getUserByUsername(username), done);
-  });
-
-  passport.use(new GithubStrategy(
-    {
-      clientID: config.githubClientId,
-      clientSecret: config.githubClientSecret,
-      callbackURL: config.publicUrl + '/user/oauth/callback'
-    },
-    function(accessToken, _refreshToken, profile, done) {
-      doneify(
-        fetchGitHubUserVouch(accessToken, config.mozilliansApiKey)
-          .then(function(isVouched) {
-            return model.putUser(profile, accessToken, isVouched)
-          }),
-        done
-      );
-    }
-  ));
+  passport.serializeUser(nodeifySync(actions.user.passportSerializeUserSync));
+  passport.deserializeUser(nodeify(actions.user.passportDeserializeUser));
+  passport.use(new GitHubStrategy({
+    clientID: config.githubClientId,
+    clientSecret: config.githubClientSecret,
+    callbackURL: config.publicUrl + '/user/oauth/callback'
+  }, nodeify(actions.user.passportVerifyUser)));
 
   // view engine setup
   server.set('views', path.join(__dirname, 'views'));
@@ -59,58 +39,33 @@ function web(config) {
 
   // uncomment after placing your favicon in /public
   //server.use(favicon(__dirname + '/public/favicon.ico'));
-  server.use(logger('dev'));
+  server.use(logger(config.dev));
   server.use(bodyParser.json());
-  server.use(bodyParser.urlencoded({ extended: false }));
+  server.use(bodyParser.urlencoded({extended: false}));
   server.use(cookieParser());
   server.use(express.static(path.join(__dirname, 'public')));
   server.use(session({
     resave: false,
     saveUninitialized: false,
     secret: config.sessionSecret,
-    store: new RedisSessionStore({client: redis, prefix: 'gos:sess:'})
+    store: new RedisSessionStore({
+      client: connections.redis, 
+      prefix: model.getKeyPrefix('sess')
+    })
   }));
   server.use(passport.initialize());
   server.use(passport.session());
 
   // routes setup
-  server.use('/', new IndexRoutes(config, model).router);
-  server.use('/my', new BuildRoutes(config, model).router);
-  server.use('/user', new UserRoutes(config).router);
-  server.use('/api/v1', new APIRoutes(config, model).router);
+  server.use('/', IndexRoutes.getRouterForRegistry(registry));
+  server.use('/my', BuildRoutes.getRouterForRegistry(registry));
+  server.use('/user', UserRoutes.getRouterForRegistry(registry));
+  server.use('/api/v1', APIRoutes.getRouterForRegistry(registry));
 
-  // serverly error handlers
-
-  // catch 404 and forward to error handler
-  server.use(function(req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-  });
-
-  // error handlers
-
-  // development error handler
-  // will print stacktrace
-  if (server.get('env') === 'development') {
-    server.use(function(err, req, res, next) {
-      res.status(err.status || 500);
-      renderWithDefaults(req, res, 'error', {
-        message: err.message,
-        error: err
-      });
-    });
-  }
-
-  // production error handler
-  // no stacktraces leaked to user
-  server.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    renderWithDefaults(req, res, 'error', {
-      message: err.message,
-      error: {}
-    });
-  });
+  // error handlers setup
+  let {handleNotFound, handleError} = errors(config.dev);
+  server.use(handleNotFound);
+  server.use(handleError)
 
   return server;
 }
