@@ -108,32 +108,51 @@ Model.prototype = {
   },
 
   /**
-   * Experiments: Builds
+   * Experiments: Build Lock
    */
 
   putExpBuildLock: function(expId) {
-    return this.redis.set(this.getKey('exp', expId, 'build'), this.config.id, 'NX');
+    return this.redis.set(
+      this.getKey('exp', expId, 'lock'), 
+      this.config.id, 
+      'NX'
+    );
+  },
+
+  putExpBuildLockMeta: function(expId, profile) {
+    return this.redis.hmset(this.getKey('exp', expId, 'lock', 'meta'), {
+      profile: profile,
+      timestamp: getUnixTimestamp()
+    });
+  },
+
+  getExpBuildLockMeta: function(expId) {
+    return this.redis.hmget(this.getKey('exp', expId, 'lock', 'meta'));
   },
 
   delExpBuildLock: function(expId) {
-    return this.redis.del(this.getKey('exp', expId, 'build'));
+    return this.redis.multi()
+      .del(this.getKey('exp', expId, 'lock'))
+      .del(this.getKey('exp', expId, 'lock', 'meta'))
+      .exec();
   },
 
-  putExpBuild: function(expId, profile, commit) {
-    var timestamp = getUnixTimestamp();
+  /**
+   * Experiments: Builds
+   */
 
-    return (
-      this.redis.multi()
-        .rpush(this.getKey('exp', expId, 'builds'), JSON.stringify({
-          profile: profile,
-          commit: commit,
-          timestamp: timestamp
-        }))
-        .zadd('gos:exps', timestamp, expId)
-        .exec()
-    ).then(function(results) {
-      return results[0][1];
-    });
+  putExpBuild: async function(expId, profile, commit) {
+    let timestamp = getUnixTimestamp();
+    let [[_, count]] = await this.redis.multi()
+      .rpush(this.getKey('exp', expId, 'builds'), JSON.stringify({
+        profile: profile,
+        commit: commit,
+        timestamp: timestamp
+      }))
+      .zadd('gos:exps', timestamp, expId)
+      .exec();
+
+    return count;
   },
 
   getLatestExpBuildId: function(expId) {
@@ -143,9 +162,7 @@ Model.prototype = {
   getAllExpBuilds: function(expId) {
     return Promise.map(
       this.redis.lrange(this.getKey('exp', expId, 'builds'), 0, -1),
-      function(value, index) {
-        return Object.assign(JSON.parse(value), {id: index+1});
-      }
+      (value, index) => Object.assign(JSON.parse(value), {id: index+1})
     );
   },
 
@@ -153,7 +170,7 @@ Model.prototype = {
    * Experiments: Analytics
    */
 
-  putExpEvents: function(id, events) {
+  putExpEvents: async function(id, events) {
     var keySet = {};
 
     events.forEach(function(event) {
@@ -162,13 +179,15 @@ Model.prototype = {
       this.timeseries.recordHit(key, event.timestamp, event.increment);
     }.bind(this));
 
-    return Promise.join(
+    await Promise.join(
       Promise.promisify(this.timeseries.exec)(),
       this.redis.sadd(this.getKey('exp', id, 'eventTypes'), Object.keys(keySet))
-    ).return({
+    );
+
+    return {
       events: events.length,
       eventTypes: Object.keys(keySet)
-    });
+    };
   },
 
   getExpEventTypes: function(id) {
@@ -209,15 +228,14 @@ Model.prototype = {
     return this.redis.get(this.getKey('user', username, 'my'));
   },
 
-  getMyExpBuildId: function(username, baseUrl) {
-    return this.getMyExp(username).then(function(expId) {
-      if (!expId) {
-        return null;
-      }
-      return this.getLatestExpBuildId(expId, baseUrl).then(function(buildId) {
-        return [expId, buildId].join('/');
-      });
-    }.bind(this));
+  getMyExpBuildId: async function(username, baseUrl) {
+    let expId = await this.getMyExp(username);
+    if (!expId) {
+      return null;
+    }
+
+    let buildId = await this.getLatestExpBuildId(expId, baseUrl);
+    return [expId, buildId].join('/');
   }
 };
 
