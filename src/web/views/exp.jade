@@ -31,7 +31,15 @@ block content
 
           if buildLock
             .alert.alert-warning.build-lock
-              p Build #{buildLockMeta.status}.
+              form(method='post', action='/exp/' + exp.id + '/ship/unlock')
+                input.btn.btn-default.btn-xs.pull-right(
+                  type='submit',
+                  value='Unlock'
+                )
+
+              p 
+                span Shipment #{buildLockMeta.status}. 
+                span.glyphicon.glyphicon-lock
               +action-info(buildLockMeta.profile, buildLockMeta.timestamp)
           else 
             .panel-body

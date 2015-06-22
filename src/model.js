@@ -160,18 +160,17 @@ Model.prototype = {
    * Experiments: Builds
    */
 
-  putExpBuild: async function(expId, profile, commit) {
+  putExpBuild: async function(expId, buildId, profile, commit) {
     let timestamp = getUnixTimestamp();
-    let [[_, count]] = await this.redis.multi()
+    await this.redis.multi()
       .rpush(this.getKey('exp', expId, 'builds'), JSON.stringify({
+        id: buildId,
         profile: profile,
         commit: commit,
         timestamp: timestamp
       }))
       .zadd('gos:exps', timestamp, expId)
       .exec();
-
-    return count;
   },
 
   getLatestExpBuildId: function(expId) {

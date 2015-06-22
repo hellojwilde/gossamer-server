@@ -133,4 +133,9 @@ routes.post('/exp/:expId/ship', ensureAuthenticated, ensureCollaborator, async f
   res.redirect('/exp/' + req.params.expId);
 });
 
+routes.post('/exp/:expId/ship/unlock', ensureAuthenticated, ensureCollaborator, async function(req, res) {
+  await this.model.delExpBuildLock(req.params.expId);
+  res.redirect('/exp/' + req.params.expId);
+});
+
 module.exports = routes;

@@ -1,4 +1,7 @@
+let GitHub = require('github');
 let Promise = require('bluebird');
+
+let fetchGitHubArchiveAndDeploy = require('../helpers/fetchGitHubArchiveAndDeploy')
 
 export async function enqueueShip(expId, profile) {
   let didGetLock = await this.model.putExpBuildLock(expId);
@@ -11,20 +14,21 @@ export async function enqueueShip(expId, profile) {
 }
 
 export async function ship(expId) {
-  await this.model.putExpBuildLockMetaStatus(expId, 'building');
-
   // fetch information from github about the thing that we're building:
   // - the place where we can download a full copy of the tree, and
   // - the specific commit that we're shipping, for the author's reference.
-  let [owner, repo, ref] = req.params.expId.split(':');
+  let [owner, repo, ref] = expId.split(':');
+  let github = new GitHub({version: '3.0.0'});
+
+  await this.model.putExpBuildLockMetaStatus(expId, 'fetching');
   let [archive, {commit}] = await Promise.all([
-    Promise.promisify(this.github.repos.getArchiveLink)({
+    Promise.promisify(github.repos.getArchiveLink)({
       user: owner,
       repo: repo,
       ref: ref,
       archive_format: 'tarball'
     }),
-    Promise.promisify(this.github.repos.getBranch)({
+    Promise.promisify(github.repos.getBranch)({
       user: owner,
       repo: repo,
       branch: ref
@@ -42,13 +46,16 @@ export async function ship(expId) {
   let archiveUrl = archive.meta.location;
   let buildId = latestBuildId + 1;
 
+  await this.model.putExpBuildLockMetaStatus(expId, 'deploying');
   await fetchGitHubArchiveAndDeploy(this.config, expId, buildId, archiveUrl);
 
   // store a build and news feed entry now that the deployment has finished
+  await this.model.putExpBuildLockMetaStatus(expId, 'notifying');
   await Promise.all([
-    this.model.putExpBuild(buildLockMeta.profile, expId, commit),
+    this.model.putExpBuild(expId, buildId, buildLockMeta.profile, commit),
     this.model.putNewsItem(buildLockMeta.profile, {
       type: 'newExpBuild',
+      id: buildId,
       expId: expId,
       exp: exp,
       commit: commit

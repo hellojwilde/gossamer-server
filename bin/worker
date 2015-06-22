@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+require('babel/register')({stage: 0});
+require('dotenv').load();
+
+var config = require('../config');
+var worker = require('../src/worker');
+var app = require('../src/app');
+
+app(config).then(function(registry) {
+  console.log('Worker started');
+  worker(registry);
+});
