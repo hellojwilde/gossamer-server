@@ -93,6 +93,7 @@ routes.post('/exp/new', ensureAuthenticated, ensureVouched, async function (req,
   }
 
   let github = new GitHub({version: '3.0.0'});
+
   github.authenticate({type: 'oauth', token: req.user.accessToken});
   let collaboratorUsernames = Promise.promisify(github.repos.getCollaborators)({
     user: username, 
@@ -115,18 +116,20 @@ routes.post('/exp/new', ensureAuthenticated, ensureVouched, async function (req,
 });
 
 routes.get('/exp/:expId', ensureAuthenticated, ensureCollaborator, async function(req, res) {
+  let {expId} = req.params;
   let props = await Promise.props({
-    exp: this.model.getExpById(req.params.expId),
-    builds: this.model.getAllExpBuilds(req.params.expId),
-    eventTypes: this.model.getExpEventTypes(req.params.expId)
+    exp: this.model.getExpById(expId),
+    builds: this.model.getAllExpBuilds(expId),
+    buildLock: this.model.getExpBuildLock(expId),
+    buildLockMeta: this.model.getExpBuildLockMeta(expId),
+    eventTypes: this.model.getExpEventTypes(expId)
   });
 
   renderWithDefaults(req, res, 'exp', props);
 });
 
 routes.post('/exp/:expId/ship', ensureAuthenticated, ensureCollaborator, async function(req, res) {
-  // TODO: Reimplement this as locking and pushing into the queue.
-
+  await this.actions.exp.enqueueShip(req.params.expId, req.user.profile);
   res.redirect('/exp/' + req.params.expId);
 });
 

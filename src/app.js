@@ -15,7 +15,7 @@ async function app(config) {
 
   let queue = await new Promise((resolve, reject) => {
     amqp.on('ready', () => {
-      amqp.queue('queue', {durable: true}, resolve);
+      amqp.queue('build-queue', {durable: true}, resolve);
     });
   }).timeout(CONNECT_TIMEOUT);
 

@@ -119,15 +119,34 @@ Model.prototype = {
     );
   },
 
+  getExpBuildLock: function(expId) {
+    return this.redis.get(this.getKey('exp', expId, 'lock'));
+  },
+
   putExpBuildLockMeta: function(expId, profile) {
     return this.redis.hmset(this.getKey('exp', expId, 'lock', 'meta'), {
-      profile: profile,
-      timestamp: getUnixTimestamp()
+      profile: JSON.stringify(profile),
+      timestamp: getUnixTimestamp(),
+      status: 'enqueued'
     });
   },
 
-  getExpBuildLockMeta: function(expId) {
-    return this.redis.hmget(this.getKey('exp', expId, 'lock', 'meta'));
+  putExpBuildLockMetaStatus: function(expId, status) {
+    return this.redis.hset(
+      this.getKey('exp', expId, 'lock', 'meta'), 
+      'status',
+      status
+    );
+  },
+
+  getExpBuildLockMeta: async function(expId) {
+    let meta = await this.redis.hgetall(
+      this.getKey('exp', expId, 'lock', 'meta')
+    );
+    if (meta.profile) {
+      meta.profile = JSON.parse(meta.profile);
+    }
+    return meta;
   },
 
   delExpBuildLock: function(expId) {

@@ -125,6 +125,12 @@ a.exp:hover .exp-name {
   margin: 0;
 }
 
+.build-lock {
+  margin-bottom: 0;
+  border: 0;
+  border-radius: 0;
+}
+
 /* mixin action-info */
 
 .action-info-user-avatar {

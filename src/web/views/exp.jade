@@ -29,15 +29,20 @@ block content
           .panel-heading
             h3.panel-title Builds
 
-          .panel-body
-            if !builds || !builds.length
-              p You haven't shipped any builds yet. Ship one and start getting data.
+          if buildLock
+            .alert.alert-warning.build-lock
+              p Build #{buildLockMeta.status}.
+              +action-info(buildLockMeta.profile, buildLockMeta.timestamp)
+          else 
+            .panel-body
+              if !builds || !builds.length
+                p You haven't shipped any builds yet. Ship one and start getting data.
 
-            form(method='post', action='/exp/' + exp.id + '/ship')
-              input.btn.btn-default.btn-block.btn-sm.btn-primary(
-                type='submit',
-                value='Ship'
-              )
+              form(method='post', action='/exp/' + exp.id + '/ship')
+                input.btn.btn-default.btn-block.btn-sm.btn-primary(
+                  type='submit',
+                  value='Ship'
+                )
 
           if builds && builds.length
             ul.list-group
