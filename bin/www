@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 require('babel/register')({stage: 0});
-// process.env.DISABLE_DOTENV || require('dotenv').load();
+require('dotenv').load({silent: true});
 
 var app = require('../src/app');
 var config = require('../config');

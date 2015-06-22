@@ -1,5 +1,5 @@
 var Actions = require('./actions');
-var AMQP = require('amqp');
+var Jackrabbit = require('jackrabbit');
 var Model = require('./model');
 var Promise = require('bluebird');
 var Redis = require('ioredis');
@@ -11,13 +11,11 @@ const CONNECT_TIMEOUT = 5000;
 async function app(config) {
   let registry = {config};
   let redis = new Redis(config.redisUrl);
-  // let amqp = new AMQP.createConnection(config.amqpUrl);
+  let queue = Jackrabbit(config.amqpUrl);
 
-  // let queue = await new Promise((resolve, reject) => {
-  //   amqp.on('ready', () => {
-  //     amqp.queue('build-queue', {durable: true}, resolve);
-  //   });
-  // }).timeout(CONNECT_TIMEOUT);
+  await new Promise((resolve, reject) => {
+    queue.on('connected', () => queue.create('build-queue', {}, resolve));
+  }).timeout(CONNECT_TIMEOUT);
 
   let actions = mapValues(Actions, function(set) {
     return mapValues(set, (action) => action.bind(registry));
@@ -25,7 +23,8 @@ async function app(config) {
 
   return Object.assign(registry, {
     config: config, 
-    connections: {redis},
+    redis: redis,
+    queue: queue,
     model: new Model(config, redis),
     actions: actions
   });

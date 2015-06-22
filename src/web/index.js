@@ -20,7 +20,7 @@ let RedisSessionStore = require('connect-redis')(session);
 let UserRoutes = require('./routes/UserRoutes');
 
 function web(registry) {
-  let {model, config, connections, actions} = registry;
+  let {model, config, redis, actions} = registry;
   let server = express();
 
   // authentication setup
@@ -49,7 +49,7 @@ function web(registry) {
     saveUninitialized: false,
     secret: config.sessionSecret,
     store: new RedisSessionStore({
-      client: connections.redis, 
+      client: redis, 
       prefix: model.getKeyPrefix('sess')
     })
   }));

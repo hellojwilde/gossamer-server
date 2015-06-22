@@ -9,7 +9,7 @@ export async function enqueueShip(expId, profile) {
   // make sure that we don't create two instances of the same build at once
   if (didGetLock !== null) {
     await this.model.putExpBuildLockMeta(expId, profile);
-    this.connections.amqp.publish('build-queue', {expId: expId});
+    this.queue.publish('build-queue', {expId: expId});
   }
 }
 

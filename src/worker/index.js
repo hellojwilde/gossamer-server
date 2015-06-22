@@ -1,10 +1,10 @@
 function worker(registry) {
   let {queue, actions} = registry;
 
-  queue.subscribe({ack: true}, async function(message) {
+  queue.handle('build-queue', async function(message, ack) {
     console.log(`Shipping ${message.expId}`);
     await actions.exp.ship(message.expId);
-    queue.shift();
+    ack();
   });
 }
 
