@@ -11,13 +11,13 @@ const CONNECT_TIMEOUT = 5000;
 async function app(config) {
   let registry = {config};
   let redis = new Redis(config.redisUrl);
-  let amqp = new AMQP.createConnection(config.amqpUrl);
+  // let amqp = new AMQP.createConnection(config.amqpUrl);
 
-  let queue = await new Promise((resolve, reject) => {
-    amqp.on('ready', () => {
-      amqp.queue('build-queue', {durable: true}, resolve);
-    });
-  }).timeout(CONNECT_TIMEOUT);
+  // let queue = await new Promise((resolve, reject) => {
+  //   amqp.on('ready', () => {
+  //     amqp.queue('build-queue', {durable: true}, resolve);
+  //   });
+  // }).timeout(CONNECT_TIMEOUT);
 
   let actions = mapValues(Actions, function(set) {
     return mapValues(set, (action) => action.bind(registry));
@@ -25,9 +25,8 @@ async function app(config) {
 
   return Object.assign(registry, {
     config: config, 
-    connections: {amqp, redis},
+    connections: {redis},
     model: new Model(config, redis),
-    queue: queue,
     actions: actions
   });
 }
