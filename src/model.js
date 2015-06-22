@@ -1,9 +1,11 @@
-var getUnixTimestamp = require('./helpers/getUnixTimestamp');
-
 var Promise = require('bluebird');
 var TimeSeries = require('redis-timeseries');
 
 var MAX_NEWS_ITEMS = 100;
+
+function getUnixTimestamp() {
+  return Math.floor(new Date() / 1000);
+}
 
 function getUserKey(username, optSuffix) {
   var path = ['gos', 'user', username];
