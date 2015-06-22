@@ -40,7 +40,7 @@ routes.get('/manifest.webapp', function(req, res) {
   });
 });
 
-routes.get('/index.html', async function(req, res) {
+routes.get('/index.html', async function(req, res, next) {
   if (!req.isAuthenticated()) {
     renderWithDefaults(req, res, 'build/login-index');
     return;
@@ -54,7 +54,7 @@ routes.get('/index.html', async function(req, res) {
     return;
   }
 
-  sendFileForBuildId.call(this, buildId, req, res);
+  sendFileForBuildId.call(this, buildId, req, res, next);
 });
 
 routes.post('/index.html', ensureAuthenticated, async function(req, res) {
@@ -65,7 +65,7 @@ routes.post('/index.html', ensureAuthenticated, async function(req, res) {
   res.redirect('/my/index.html');
 });
 
-routes.get('/*', ensureAuthenticated, async function(req, res) {
+routes.get('/*', ensureAuthenticated, async function(req, res, next) {
   let buildId = await this.model.getMyExpBuildId(req.user.username)
 
   if (!buildId) {
@@ -73,7 +73,7 @@ routes.get('/*', ensureAuthenticated, async function(req, res) {
     return;
   }
 
-  sendFileForBuildId.call(this, buildId, req, res);
+  sendFileForBuildId.call(this, buildId, req, res, next);
 });
 
 module.exports = routes;
