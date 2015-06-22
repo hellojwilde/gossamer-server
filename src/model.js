@@ -7,22 +7,12 @@ function getUnixTimestamp() {
   return Math.floor(new Date() / 1000);
 }
 
-function getUserKey(username, optSuffix) {
-  var path = ['gos', 'user', username];
-  optSuffix && path.push(optSuffix);
-  return path.join(':');
+function getKey(...parts) {
+  return ['gos'].concat(parts).join(':');
 }
 
-function getExpKey(id, optSuffix) {
-  var path = ['gos', 'exp', id];
-  optSuffix && path.push(optSuffix);
-  return path.join(':');
-}
-
-function getNewsKey(optSuffix) {
-  var path = ['gos', 'news'];
-  optSuffix && path.push(optSuffix);
-  return path.join(':');
+function getKeyPrefix(...parts) {
+  return getKey(...parts) + ':';
 }
 
 function Model(config, redis) {
@@ -38,9 +28,9 @@ Model.prototype = {
 
   putUser: function(profile, accessToken, isVouched) {
     var writePromise = this.redis.multi()
-      .set(getUserKey(profile.username, 'accessToken'), accessToken)
-      .set(getUserKey(profile.username, 'isVouched'), isVouched)
-      .set(getUserKey(profile.username), JSON.stringify(profile))
+      .set(getKey('user', profile.username, 'accessToken'), accessToken)
+      .set(getKey('user', profile.username, 'isVouched'), isVouched)
+      .set(getKey('user', profile.username), JSON.stringify(profile))
       .exec();
 
     return writePromise.then(function() {
@@ -55,9 +45,9 @@ Model.prototype = {
   getUserByUsername: function(username) {
     return Promise.props({
       username: username,
-      profile: this.redis.get(getUserKey(username)).then(JSON.parse),
-      isVouched: this.redis.get(getUserKey(username, 'isVouched')),
-      accessToken: this.redis.get(getUserKey(username, 'accessToken'))
+      profile: this.redis.get(getKey('user', username)).then(JSON.parse),
+      isVouched: this.redis.get(getKey('user', username, 'isVouched')),
+      accessToken: this.redis.get(getKey('user', username, 'accessToken'))
     });
   },
 
@@ -76,10 +66,10 @@ Model.prototype = {
     };
 
     var transaction = this.redis.multi()
-      .hmset(getExpKey(id), exp);
+      .hmset(getKey('exp', id), exp);
 
     collaborators.forEach(function(collaborator) {
-      transaction.sadd(getUserKey(collaborator, 'exps'), id);
+      transaction.sadd(getKey('user', collaborator, 'exps'), id);
     });
 
     return transaction.exec().return(exp);
@@ -90,15 +80,15 @@ Model.prototype = {
   },
 
   haveExpById: function(id) {
-    return this.redis.exists(getExpKey(id));
+    return this.redis.exists(getKey('exp', id));
   },
 
   getExpById: function(id) {
-    return this.redis.hgetall(getExpKey(id));
+    return this.redis.hgetall(getKey('exp', id));
   },
 
   haveExpByUsernameId: function(username, id) {
-    return this.redis.sismember(getUserKey(username, 'exps'), id);
+    return this.redis.sismember(getKey('user', username, 'exps'), id);
   },
 
   getAllExpsWithBuilds: function() {
@@ -110,7 +100,7 @@ Model.prototype = {
 
   getExpsByUsername: function(username) {
     return Promise.map(
-      this.redis.smembers(getUserKey(username, 'exps')),
+      this.redis.smembers(getKey('user', username, 'exps')),
       this.getExpById.bind(this)
     );
   },
@@ -120,11 +110,11 @@ Model.prototype = {
    */
 
   putExpBuildLock: function(expId) {
-    return this.redis.set(getExpKey(expId, 'build'), this.config.id, 'NX');
+    return this.redis.set(getKey('exp', expId, 'build'), this.config.id, 'NX');
   },
 
   delExpBuildLock: function(expId) {
-    return this.redis.del(getExpKey(expId, 'build'));
+    return this.redis.del(getKey('exp', expId, 'build'));
   },
 
   putExpBuild: function(expId, profile, commit) {
@@ -132,7 +122,7 @@ Model.prototype = {
 
     return (
       this.redis.multi()
-        .rpush(getExpKey(expId, 'builds'), JSON.stringify({
+        .rpush(getKey('exp', expId, 'builds'), JSON.stringify({
           profile: profile,
           commit: commit,
           timestamp: timestamp
@@ -145,12 +135,12 @@ Model.prototype = {
   },
 
   getLatestExpBuildId: function(expId) {
-    return this.redis.llen(getExpKey(expId, 'builds'));
+    return this.redis.llen(getKey('exp', expId, 'builds'));
   },
 
   getAllExpBuilds: function(expId) {
     return Promise.map(
-      this.redis.lrange(getExpKey(expId, 'builds'), 0, -1),
+      this.redis.lrange(getKey('exp', expId, 'builds'), 0, -1),
       function(value, index) {
         return Object.assign(JSON.parse(value), {id: index+1});
       }
@@ -172,7 +162,7 @@ Model.prototype = {
 
     return Promise.join(
       Promise.promisify(this.timeseries.exec)(),
-      this.redis.sadd(getExpKey(id, 'eventTypes'), Object.keys(keySet))
+      this.redis.sadd(getKey('exp', id, 'eventTypes'), Object.keys(keySet))
     ).return({
       events: events.length,
       eventTypes: Object.keys(keySet)
@@ -180,7 +170,7 @@ Model.prototype = {
   },
 
   getExpEventTypes: function(id) {
-    return this.redis.smembers(getExpKey(id, 'eventTypes'));
+    return this.redis.smembers(getKey('exp', id, 'eventTypes'));
   },
 
   /**
@@ -189,18 +179,18 @@ Model.prototype = {
 
   putNewsItem: function(profile, details) {
     return this.redis.multi()
-      .lpush(getNewsKey(), JSON.stringify({
+      .lpush(getKey('news', ), JSON.stringify({
         profile: profile,
         details: details,
         timestamp: getUnixTimestamp()
       }))
-      .ltrim(getNewsKey(), 0, MAX_NEWS_ITEMS)
+      .ltrim(getKey('news', ), 0, MAX_NEWS_ITEMS)
       .exec();
   },
 
   getAllNewsItems: function() {
     return Promise.map(
-      this.redis.lrange(getNewsKey(), 0, -1), 
+      this.redis.lrange(getKey('news', ), 0, -1), 
       JSON.parse
     );
   },
@@ -210,11 +200,11 @@ Model.prototype = {
    */
 
   putMyExp: function(username, expId) {
-    return this.redis.set(getUserKey(username, 'my'), expId);
+    return this.redis.set(getKey('user', username, 'my'), expId);
   },
 
   getMyExp: function(username) {
-    return this.redis.get(getUserKey(username, 'my'));
+    return this.redis.get(getKey('user', username, 'my'));
   },
 
   getMyExpBuildId: function(username, baseUrl) {
