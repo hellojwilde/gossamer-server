@@ -2,21 +2,23 @@ var querystring = require('querystring');
 var request = require('request');
 
 var Promise = require('bluebird');
+var GitHub = require('github');
 
 // github+mozillians vouching
 
-function fetchGitHubUserVouch(github, accessToken, mozilliansApiKey) {
+function fetchGitHubUserVouch(githubUserToken, mozilliansApiKey) {
   return Promise.map(
-    fetchGitHubVerifiedEmails(github, accessToken),
+    fetchGitHubVerifiedEmails(githubUserToken),
     fetchVouch.bind(null, mozilliansApiKey)
   ).then(function(vouches) {
     return vouches.indexOf(true) !== -1;
   });
 }
 
-function fetchGitHubVerifiedEmails(github, accessToken) {
+function fetchGitHubVerifiedEmails(githubUserToken) {
   return new Promise(function(resolve, reject) {
-    github.authenticate({type: 'oauth', token: accessToken});
+    var github = new GitHub({version: '3.0.0'});
+    github.authenticate({type: 'oauth', token: githubUserToken});
     github.user.getEmails({}, function(err, result) {
       if (err) {
         reject(err);
@@ -32,16 +34,16 @@ function fetchGitHubVerifiedEmails(github, accessToken) {
 }
 
 function fetchVouch(mozilliansApiKey, email) {
-  var url = (
-    'https://mozillians.org/api/v2/users/?' +
-    querystring.stringify({
-      'api-key': mozilliansApiKey, 
-      'email': email, 
-      'is_vouched': 'true'
-    })
-  );
-
   return new Promise(function(resolve, reject) {
+    var url = (
+      'https://mozillians.org/api/v2/users/?' +
+      querystring.stringify({
+        'api-key': mozilliansApiKey, 
+        'email': email, 
+        'is_vouched': 'true'
+      })
+    );
+
     request(url, function(err, response, body) {
       if (err) {
         reject(err);

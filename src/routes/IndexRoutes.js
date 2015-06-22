@@ -4,8 +4,9 @@ var renderWithDefaults = require('../helpers/renderWithDefaults');
 var fetchGitHubArchiveAndDeploy = require('../helpers/fetchGitHubArchiveAndDeploy');
 
 var Promise = require('bluebird');
+var GitHub = require('github');
 
-function IndexRoutes(config, model, github) {
+function IndexRoutes(config, model) {
   var router = express.Router();
 
   router.get('/', this.getIndex.bind(this));
@@ -17,7 +18,6 @@ function IndexRoutes(config, model, github) {
   this.router = router;
   this.config = config;
   this.model = model;
-  this.github = github;
 }
 
 IndexRoutes.prototype = {
@@ -49,8 +49,10 @@ IndexRoutes.prototype = {
   },
 
   getNewExp: function(req, res) {
+    var github = new GitHub({version: '3.0.0'});
+
     if (!req.query.repo && !req.query.branch) {
-      this.github.repos.getFromUser({
+      github.repos.getFromUser({
         user: req.user.username,
         sort: 'pushed',
         type: 'owner'
@@ -62,7 +64,7 @@ IndexRoutes.prototype = {
         });
       });
     } else if (!req.query.branch) {
-      this.github.repos.getBranches({
+      github.repos.getBranches({
         user: req.user.username,
         repo: req.query.repo,
       }, function(err, branches) {
@@ -112,8 +114,9 @@ IndexRoutes.prototype = {
         return;
       }
 
-      this.github.authenticate({type: 'oauth', token: req.user.accessToken});
-      this.github.repos.getCollaborators({
+      var github = new GitHub({version: '3.0.0'});
+      github.authenticate({type: 'oauth', token: req.user.accessToken});
+      github.repos.getCollaborators({
         user: req.user.username,
         repo: req.body.repo
       }, function(err, collaborators) {
@@ -160,15 +163,16 @@ IndexRoutes.prototype = {
 
   postExpShip: function(req, res) {
     var parsedId = req.params.expId.split(':');
+    var github = new GitHub({version: '3.0.0'});
 
     Promise.all([
-      Promise.promisify(this.github.repos.getArchiveLink)({
+      Promise.promisify(github.repos.getArchiveLink)({
         user: parsedId[0],
         repo: parsedId[1],
         ref: parsedId[2],
         archive_format: 'tarball'
       }),
-      Promise.promisify(this.github.repos.getBranch)({
+      Promise.promisify(github.repos.getBranch)({
         user: parsedId[0],
         repo: parsedId[1],
         branch: parsedId[2]
