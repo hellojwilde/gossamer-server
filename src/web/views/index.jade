@@ -23,7 +23,7 @@ block content
               case item.details.type
                 when 'newExp'
                   =' created '
-                  a(href='/exp/' + item.details.id)= item.details.title
+                  a(href='/exp/' + item.details.expId)= item.details.title
                 when 'newExpBuild'
                   =' shipped '
                   a(href='/builds/' + item.details.exp.id + '/' + item.details.id)
