@@ -1,4 +1,4 @@
-var Routes = require('../helpers/Routes');
+let Routes = require('../helpers/Routes');
 
 function ensureAPIAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {return next();}

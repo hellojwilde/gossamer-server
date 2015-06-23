@@ -1,7 +1,7 @@
-var Promise = require('bluebird');
-var TimeSeries = require('redis-timeseries');
+let Promise = require('bluebird');
+let TimeSeries = require('redis-timeseries');
 
-var MAX_NEWS_ITEMS = 100;
+const MAX_NEWS_ITEMS = 100;
 
 function getUnixTimestamp() {
   return Math.floor(new Date() / 1000);
@@ -213,28 +213,6 @@ Model.prototype = {
   },
 
   /**
-   * News Feed
-   */
-
-  putNewsItem: function(profile, details) {
-    return this.redis.multi()
-      .lpush(this.getKey('news', ), JSON.stringify({
-        profile: profile,
-        details: details,
-        timestamp: getUnixTimestamp()
-      }))
-      .ltrim(this.getKey('news', ), 0, MAX_NEWS_ITEMS)
-      .exec();
-  },
-
-  getAllNewsItems: function() {
-    return Promise.map(
-      this.redis.lrange(this.getKey('news', ), 0, -1), 
-      JSON.parse
-    );
-  },
-
-  /**
    * My Build 
    */
 
@@ -254,6 +232,28 @@ Model.prototype = {
 
     let buildId = await this.getLatestExpBuildId(expId, baseUrl);
     return [expId, buildId].join('/');
+  },
+
+  /**
+   * News Feed
+   */
+
+  putNewsItem: function(profile, details) {
+    return this.redis.multi()
+      .lpush(this.getKey('news', ), JSON.stringify({
+        profile: profile,
+        details: details,
+        timestamp: getUnixTimestamp()
+      }))
+      .ltrim(this.getKey('news', ), 0, MAX_NEWS_ITEMS)
+      .exec();
+  },
+
+  getAllNewsItems: function() {
+    return Promise.map(
+      this.redis.lrange(this.getKey('news', ), 0, -1), 
+      JSON.parse
+    );
   }
 };
 

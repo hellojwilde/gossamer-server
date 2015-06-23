@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 require('babel/register')({stage: 0});
-require('dotenv').load({silent: true});
 
 var config = require('../config');
 var worker = require('../src/worker');

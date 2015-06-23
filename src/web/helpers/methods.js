@@ -5,14 +5,14 @@ function splitNodeArguments(args) {
   ];
 }
 
-export function nodeifySync(method) {
+function nodeifySync(method) {
   return function() {
     let [args, callback] = splitNodeArguments(arguments);
     callback(null, method(...args));
   };
 }
 
-export function nodeify(method) {
+function nodeify(method) {
   return function() {
     let [args, callback] = splitNodeArguments(arguments);
     method(...args).then(
@@ -21,3 +21,8 @@ export function nodeify(method) {
     );
   };
 }
+
+module.exports = {
+  nodeify,
+  nodeifySync
+};

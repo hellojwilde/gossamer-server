@@ -1,10 +1,10 @@
-var Actions = require('./actions');
-var Jackrabbit = require('jackrabbit');
-var Model = require('./model');
-var Promise = require('bluebird');
-var Redis = require('ioredis');
+let Actions = require('./actions');
+let Jackrabbit = require('jackrabbit');
+let Model = require('./model');
+let Promise = require('bluebird');
+let Redis = require('ioredis');
 
-var mapValues = require('lodash.mapvalues');
+let mapValues = require('lodash.mapvalues');
 
 const CONNECT_TIMEOUT = 5000;
 

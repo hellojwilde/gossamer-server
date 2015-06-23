@@ -1,22 +1,22 @@
-var fs = require('fs');
-var gunzip = require('gunzip-maybe');
-var mkdirp = require('mkdirp');
-var path = require('path');
-var request = require('request');
-var tar = require('tar-stream');
-var exec = require('child_process').exec;
-var replaceStream = require('replacestream');
+let fs = require('fs');
+let gunzip = require('gunzip-maybe');
+let mkdirp = require('mkdirp');
+let path = require('path');
+let request = require('request');
+let tar = require('tar-stream');
+let exec = require('child_process').exec;
+let replaceStream = require('replacestream');
 
-var Promise = require('bluebird');
+let Promise = require('bluebird');
 
 function fetchGitHubArchiveAndDeploy(config, expId, buildId, archiveUrl) {
-  var buildPath = path.join(config.buildsPath, expId, ''+buildId);
-  var extract = tar.extract();
+  let buildPath = path.join(config.buildsPath, expId, ''+buildId);
+  let extract = tar.extract();
   
-  var filesPromise = new Promise(function(resolve, reject) {
+  let filesPromise = new Promise(function(resolve, reject) {
     extract.on('entry', function(header, stream, next) {
-      var partialPath = header.name.split(path.sep).slice(1).join(path.sep);
-      var fullBuildPath = path.join(buildPath, partialPath);
+      let partialPath = header.name.split(path.sep).slice(1).join(path.sep);
+      let fullBuildPath = path.join(buildPath, partialPath);
 
       if (header.type === 'directory') {
         mkdirp(fullBuildPath, function(err) {

@@ -1,6 +1,6 @@
 let express = require('express');
 
-export default class Routes {
+class Routes {
   constructor() {
     this.routes = [];
   }
@@ -32,3 +32,5 @@ export default class Routes {
     });
   }
 }
+
+module.exports = Routes;

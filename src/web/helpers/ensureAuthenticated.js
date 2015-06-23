@@ -1,6 +1,6 @@
-var querystring = require('querystring');
+let querystring = require('querystring');
 
-export default function ensureAuthenticated(req, res, next) {
+function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {return next();}
 
   res.redirect(
@@ -8,3 +8,5 @@ export default function ensureAuthenticated(req, res, next) {
     querystring.stringify({redirect: req.originalUrl})
   );
 }
+
+module.exports = ensureAuthenticated;

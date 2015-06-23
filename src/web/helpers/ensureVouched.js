@@ -1,5 +1,7 @@
-export default function ensureVouched(req, res, next) {
+function ensureVouched(req, res, next) {
   if (req.user.isVouched) {
     next();
   }
 }
+
+module.exports = ensureVouched;

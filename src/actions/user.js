@@ -1,14 +1,14 @@
-var fetchGitHubUserIsVouched = require('../helpers/fetchGitHubUserIsVouched');
+let fetchGitHubUserIsVouched = require('../helpers/fetchGitHubUserIsVouched');
 
-export function passportSerializeUserSync(user) {
+function passportSerializeUserSync(user) {
   return user.username;
 }
 
-export function passportDeserializeUser(username) {
+function passportDeserializeUser(username) {
   return this.model.getUser(username);
 }
 
-export async function passportVerifyUser(accessToken, refreshToken, profile) {
+async function passportVerifyUser(accessToken, refreshToken, profile) {
   let isVouched = await fetchGitHubUserIsVouched(
     accessToken, 
     this.config.mozilliansApiKey
@@ -16,3 +16,10 @@ export async function passportVerifyUser(accessToken, refreshToken, profile) {
 
   return await this.model.putUser(profile, accessToken, isVouched);
 }
+
+
+module.exports = {
+  passportSerializeUserSync,
+  passportDeserializeUser,
+  passportVerifyUser
+};

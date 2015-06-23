@@ -1,13 +1,11 @@
-var express = require('express');
-var ensureAuthenticated = require('../helpers/ensureAuthenticated');
-var renderWithDefaults = require('../helpers/renderWithDefaults');
-var path = require('path');
+let express = require('express');
+let ensureAuthenticated = require('../helpers/ensureAuthenticated');
+let renderWithDefaults = require('../helpers/renderWithDefaults');
+let path = require('path');
 
-var Routes = require('../helpers/Routes');
+let Routes = require('../helpers/Routes');
 
 function sendFileForBuildId(buildId, req, res, next) {
-  console.log('sfbi', buildId, path.join(this.config.buildsPath, buildId))
-
   express.static(
     path.join(this.config.buildsPath, buildId)
   )(req, res, next);

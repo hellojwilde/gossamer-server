@@ -1,9 +1,9 @@
 let GitHub = require('github');
 let Promise = require('bluebird');
 
-let fetchGitHubArchiveAndDeploy = require('../helpers/fetchGitHubArchiveAndDeploy')
+let fetchGitHubArchiveAndDeploy = require('../helpers/fetchGitHubArchiveAndDeploy');
 
-export async function enqueueShip(expId, profile) {
+async function enqueueShip(expId, profile) {
   let didGetLock = await this.model.putExpBuildLock(expId);
 
   // make sure that we don't create two instances of the same build at once
@@ -13,7 +13,7 @@ export async function enqueueShip(expId, profile) {
   }
 }
 
-export async function ship(expId) {
+async function ship(expId) {
   // fetch information from github about the thing that we're building:
   // - the place where we can download a full copy of the tree, and
   // - the specific commit that we're shipping, for the author's reference.
@@ -21,6 +21,7 @@ export async function ship(expId) {
   let github = new GitHub({version: '3.0.0'});
 
   await this.model.putExpBuildLockMetaStatus(expId, 'fetching');
+
   let [archive, {commit}] = await Promise.all([
     Promise.promisify(github.repos.getArchiveLink)({
       user: owner,
@@ -41,11 +42,11 @@ export async function ship(expId) {
     this.model.getExpById(expId),
     this.model.getExpBuildLockMeta(expId)
   ]);
-
-  // deploy the commit
+  
   let archiveUrl = archive.meta.location;
   let buildId = latestBuildId + 1;
 
+  // deploy the commit
   await this.model.putExpBuildLockMetaStatus(expId, 'deploying');
   await fetchGitHubArchiveAndDeploy(this.config, expId, buildId, archiveUrl);
 
@@ -65,3 +66,8 @@ export async function ship(expId) {
   // clear the locks on the build
   await this.model.delExpBuildLock(expId);
 }
+
+module.exports = {
+  enqueueShip,
+  ship
+};

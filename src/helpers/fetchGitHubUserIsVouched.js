@@ -1,8 +1,8 @@
-var querystring = require('querystring');
-var request = require('request');
+let querystring = require('querystring');
+let request = require('request');
 
-var Promise = require('bluebird');
-var GitHub = require('github');
+let Promise = require('bluebird');
+let GitHub = require('github');
 
 // github+mozillians vouching
 

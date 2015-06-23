@@ -1,9 +1,9 @@
-var renderWithDefaults = require('./renderWithDefaults');
+let renderWithDefaults = require('./renderWithDefaults');
 
-export default function errors(dev) {
+function errors(dev) {
   return {
     handleNotFound: function(req, res, next) {
-      var err = new Error('Not Found');
+      let err = new Error('Not Found');
       err.status = 404;
       next(err);
     },
@@ -17,3 +17,5 @@ export default function errors(dev) {
     }
   };
 }
+
+module.exports = errors;

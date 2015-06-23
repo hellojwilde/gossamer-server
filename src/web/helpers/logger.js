@@ -1,7 +1,9 @@
-var morgan = require('morgan');
+let morgan = require('morgan');
 
-export default function logger(dev) {
+function logger(dev) {
   return morgan('dev', {
     skip: (req, res) => !dev && res.statusCode < 400
   });
 }
+
+module.exports = logger;
