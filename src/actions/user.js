@@ -17,7 +17,6 @@ async function passportVerifyUser(accessToken, refreshToken, profile) {
   return await this.model.putUser(profile, accessToken, isVouched);
 }
 
-
 module.exports = {
   passportSerializeUserSync,
   passportDeserializeUser,

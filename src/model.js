@@ -1,10 +1,50 @@
+let crypto = require('crypto');
+
 let Promise = require('bluebird');
 let TimeSeries = require('redis-timeseries');
+let {Writable} = require('stream');
 
 const MAX_NEWS_ITEMS = 100;
 
 function getUnixTimestamp() {
   return Math.floor(new Date() / 1000);
+}
+
+class ModelExpBuildWritableStream extends Writable {
+  constructor(model, expId, buildId, filePath) {
+    super();
+
+    this.model = model;
+    this.expId = expId;
+    this.buildId = buildId;
+    this.filePath = filePath;
+
+    this.buffers = [];
+    this.hash = crypto.createHash('sha1');
+
+    this.on('finish', this._finish.bind(this));
+  }
+
+  _write(chunk, encoding, next) {
+    if (!Buffer.isBuffer(chunk)) {
+      chunk = new Buffer(chunk, encoding);
+    }
+
+    this.hash.update(chunk);
+    this.buffers.push(chunk);
+    
+    next();
+  }
+
+  _finish() {
+    return this.model.putExpBuildFile(
+      this.expId, 
+      this.buildId, 
+      this.filePath, 
+      this.hash.digest('base64'), 
+      Buffer.concat(this.buffers)
+    );
+  }
 }
 
 class Model {
@@ -183,6 +223,45 @@ class Model {
       this.redis.lrange(this.getKey('exp', expId, 'builds'), 0, -1),
       (value, index) => Object.assign(JSON.parse(value), {id: index+1})
     );
+  }
+
+  /**
+   * Experiments: Build
+   */
+  
+  getExpBuildWritableStream(expId, buildId, filePath) {
+    return new ModelExpBuildWritableStream(this, expId, buildId, filePath);
+  }
+
+  async putExpBuildFile(expId, buildId, filePath, digest, buffer) {
+    let blobKey = this.getKey('blob', digest);
+    let blobExists = await this.redis.exists(blobKey);
+
+    if (!blobExists) {
+      await this.redis.set(blobKey, buffer);
+    }
+
+    await this.redis.hset(
+      this.getKey('build', expId, buildId),
+      filePath, 
+      digest
+    );
+  }
+
+  getExpBuildFileDigest(expId, buildId, filePath) {
+    return this.redis.hget(this.getKey('build', expId, buildId), filePath);
+  }
+
+  async getExpBuildFile(expId, buildId, filePath) {
+    let digest = await this.getExpBuildFileDigest(expId, buildId, filePath);
+    if (!digest) {
+      return null;
+    }
+
+    return await Promise.props({
+      digest, 
+      buffer: this.redis.getBuffer(this.getKey('blob', digest))
+    });
   }
 
   /**

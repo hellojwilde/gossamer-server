@@ -1,7 +1,7 @@
 let GitHub = require('github');
 let Promise = require('bluebird');
 
-let fetchGitHubArchiveAndDeploy = require('../helpers/fetchGitHubArchiveAndDeploy');
+let fetchArchiveAndShip = require('../helpers/fetchArchiveAndShip');
 
 async function enqueueShip(expId, profile) {
   let didGetLock = await this.model.putExpBuildLock(expId);
@@ -14,13 +14,14 @@ async function enqueueShip(expId, profile) {
 }
 
 async function ship(expId) {
+  // put a note on the lock that we're shipping the build now
+  await this.model.putExpBuildLockMetaStatus(expId, 'shipping');
+
   // fetch information from github about the thing that we're building:
   // - the place where we can download a full copy of the tree, and
   // - the specific commit that we're shipping, for the author's reference.
   let [owner, repo, ref] = expId.split(':');
   let github = new GitHub({version: '3.0.0'});
-
-  await this.model.putExpBuildLockMetaStatus(expId, 'fetching');
 
   let [archive, {commit}] = await Promise.all([
     Promise.promisify(github.repos.getArchiveLink)({
@@ -42,16 +43,14 @@ async function ship(expId) {
     this.model.getExpById(expId),
     this.model.getExpBuildLockMeta(expId)
   ]);
-  
+
   let archiveUrl = archive.meta.location;
   let buildId = latestBuildId + 1;
 
   // deploy the commit
-  await this.model.putExpBuildLockMetaStatus(expId, 'deploying');
-  await fetchGitHubArchiveAndDeploy(this.config, expId, buildId, archiveUrl);
+  await fetchArchiveAndShip(this, expId, buildId, archiveUrl);
 
   // store a build and news feed entry now that the deployment has finished
-  await this.model.putExpBuildLockMetaStatus(expId, 'notifying');
   await Promise.all([
     this.model.putExpBuild(expId, buildId, buildLockMeta.profile, commit),
     this.model.putNewsItem(buildLockMeta.profile, {
