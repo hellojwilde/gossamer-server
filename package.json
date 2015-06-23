@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "forewoman start --watch web=./src,worker=./src --env .env"
+    "start": "forewoman start --watch web=./src,worker=./src --env .env",
+    "postinstall": "cd src/web/public/my && npm install --production"
   },
   "dependencies": {
     "babel": "^5.6.1",
