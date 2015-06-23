@@ -2,6 +2,7 @@ let bodyParser = require('body-parser');
 let cookieParser = require('cookie-parser');
 let express = require('express');
 let favicon = require('serve-favicon');
+let forceSecure = require('express-force-ssl');
 let moment = require('moment');
 let passport = require('passport');
 let path = require('path');
@@ -62,6 +63,10 @@ function web(registry) {
   }));
   server.use(passport.initialize());
   server.use(passport.session());
+
+  if (!config.dev) {
+    server.use(forceSecure);
+  }
 
   // routes setup
   server.use('/', IndexRoutes.getRouterForRegistry(registry));
