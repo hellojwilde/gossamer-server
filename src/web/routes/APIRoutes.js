@@ -26,30 +26,29 @@ function sendify(promised, res) {
 let routes = new Routes();
 
 routes.get('/my/latest', ensureAPIAuthenticated, function(req, res) {
-  sendify(this.model.getMyExpBuildId(
-    req.user.username, 
-    this.config.publicUrl
-  ), res);
+  sendify(
+    this.model.getMyExpBuild(req.user.username)
+     .then((build) => build.join('/')),
+    res
+  );
 });
 
 routes.post('/my', ensureAPIAuthenticated, async function(req, res) {
-  let buildId = await this.model.getLatestExpBuildId(req.body.expId);
-
-  if (!buildId) {
+  let build = await this.model.getLatestExpBuild(req.body.expId);
+  if (build) {
+    sendify(this.model.putMyExp(req.user.username, res.body.expId), res);
+  } else {
     sendAPIError(res, 400, 'That expId does not have builds.');
-    return;
   }
-  sendify(this.model.putMyExp(req.user.username, res.body.expId), res);
 });
 
-routes.post('/my', ensureAPIAuthenticated, function(req, res) {
+routes.post('/my/events', ensureAPIAuthenticated, function(req, res) {
   let expId = this.model.getMyExp(req.user.username);
-
-  if (!expId) {
+  if (expId) {
+    sendify(this.model.putExpEvents(expId, req.body.events), res);
+  } else {
     sendAPIError(res, 400, 'User is not enrolled in any experiments.');
-    return;
   }
-  sendify(this.model.putExpEvents(expId, req.body.events), res);
 });
 
 module.exports = routes;

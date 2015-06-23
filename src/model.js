@@ -254,6 +254,7 @@ class Model {
 
   async getExpBuildFile(expId, buildId, filePath) {
     let digest = await this.getExpBuildFileDigest(expId, buildId, filePath);
+
     if (!digest) {
       return null;
     }
@@ -304,14 +305,13 @@ class Model {
     return this.redis.get(this.getKey('user', username, 'my'));
   }
 
-  async getMyExpBuildId(username, baseUrl) {
+  async getMyExpBuild(username, baseUrl) {
     let expId = await this.getMyExp(username);
-    if (!expId) {
-      return null;
+    if (expId) {
+      let buildId = await this.getLatestExpBuildId(expId);
+      return [expId, buildId];
     }
-
-    let buildId = await this.getLatestExpBuildId(expId, baseUrl);
-    return [expId, buildId].join('/');
+    return null;
   }
 
   /**

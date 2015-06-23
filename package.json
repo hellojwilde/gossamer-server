@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "forewoman start --watch web=./src,worker=./src --env .env",
+    "start": "forewoman start --port 3000 --watch web=./src,worker=./src --env .env",
     "postinstall": "cd src/web/public/my && npm install --production"
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "jackrabbit": "^3.0.8",
     "jade": "~1.9.2",
     "lodash.mapvalues": "^3.0.1",
+    "mime": "^1.3.4",
     "mkdirp": "^0.5.1",
     "moment": "^2.10.3",
     "morgan": "~1.5.3",

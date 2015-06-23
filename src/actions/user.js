@@ -10,7 +10,7 @@ function passportDeserializeUser(username) {
 
 async function passportVerifyUser(accessToken, refreshToken, profile) {
   let isVouched = await fetchGitHubUserIsVouched(
-    accessToken, 
+    accessToken,
     this.config.mozilliansApiKey
   );
 
