@@ -98,23 +98,15 @@ class Model {
    */
 
   putExp(owner, repo, branch, collaborators, title) {
-    var id = this.getExpId(owner, repo, branch);
-    var exp = {
-      id: id,
-      owner: owner,
-      repo: repo,
-      branch: branch,
-      title: title
-    };
+    let id = this.getExpId(owner, repo, branch);
+    let transaction = this.redis.multi()
+      .hmset(this.getKey('exp', id), {id, owner, repo, branch, title});
 
-    var transaction = this.redis.multi()
-      .hmset(this.getKey('exp', id), exp);
-
-    collaborators.forEach(function(collaborator) {
+    collaborators.forEach((collaborator) => {
       transaction.sadd(this.getKey('user', collaborator, 'exps'), id);
     });
 
-    return transaction.exec().return(exp);
+    return transaction.exec();
   }
 
   getExpId(owner, repo, branch) {

@@ -77,42 +77,42 @@ routes.post('/exp/new', ensureAuthenticated, ensureVouched, async function (req,
     });
   }
 
-  if (!req.body.title || req.body.title.length === 0) {
+  let {username, profile, accessToken} = req.user;
+  let {repo, branch, title} = req.body;
+
+  if (!title || title.length === 0) {
     renderWithError('Title is blank. We need a title.');
     return;
   }
-
-  let {username, profile} = req.user;
-  let {repo, branch, title} = req.body;
+  
   let expId = this.model.getExpId(username, repo, branch);
   let expIdExists = await this.model.haveExpById(expId);
-
   if (expIdExists) {
     renderWithError('There is already an experiment for this branch.')
     return;
   }
 
   let github = new GitHub({version: '3.0.0'});
+  github.authenticate({type: 'oauth', token: accessToken});
 
-  github.authenticate({type: 'oauth', token: req.user.accessToken});
-  let collaboratorUsernames = Promise.promisify(github.repos.getCollaborators)({
-    user: username, 
-    repo: repo
-  }).map((collaborator) => collaborator.login);
+  let collaborators = await Promise.map(
+    Promise.promisify(github.repos.getCollaborators)({
+      user: username, 
+      repo: repo
+    }),
+    (collaborator) => collaborator.login
+  );
 
-  await Promise.all([
-    this.model.putExp(username, repo, branch, collaboratorUsernames, title),
+  await Promise.join(
+    this.model.putExp(username, repo, branch, collaborators, title),
     this.model.putNewsItem(profile, {
       type: 'newExp',
       title: title,
-      expId: expId,
-      owner: username,
-      repo: repo,
-      branch: branch
+      expId: expId
     })
-  ]);
+  );
 
-  res.redirect('/exp/' + id);
+  res.redirect('/exp/' + expId);
 });
 
 routes.get('/exp/:expId', ensureAuthenticated, ensureCollaborator, async function(req, res) {
