@@ -43,7 +43,14 @@ function web(registry) {
   server.use(bodyParser.json());
   server.use(bodyParser.urlencoded({extended: false}));
   server.use(cookieParser());
-  server.use(express.static(path.join(__dirname, 'public')));
+  server.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: function(res, path) {
+      let fileName = path.split('/').slice(-1)[0];
+      if (fileName === 'manifest.webapp') {
+        res.setHeader('Content-Type', 'application/x-web-app-manifest+json');
+      }
+    }
+  }));
   server.use(session({
     resave: false,
     saveUninitialized: false,

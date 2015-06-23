@@ -1,0 +1,39 @@
+{
+  "name": "browser.html",
+  "description": "browser.html",
+  "version": "0.0.2",
+  "homepage": "https://github.com/mozilla/browser.html",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mozilla/browser.html.git",
+    "web": "https://github.com/mozilla/browser.html"
+  },
+  "bugs": {
+    "url": "http://github.com/mozilla/browser.html/issues/"
+  },
+  "scripts": {
+    "start-server": "ecstatic . --port 6060",
+    "start": "./.bin/start.js",
+    "deploy": "./.bin/deploy.sh"
+  },
+  "devDependencies": {
+    "ecstatic": "^0.7.1",
+    "jscs": "^1.8.1"
+  },
+  "licenses": [
+    {
+      "type": "MPL",
+      "version": "2.0",
+      "url": "http://mozilla.org/MPL/2.0/"
+    }
+  ],
+  "dependencies": {
+    "immutable": "git://github.com/jcranendonk/immutable-js.git#0986651df9398187390f4638424adb532985439f",
+    "node-uuid": "1.4.3",
+    "omniscient": "3.1.0",
+    "pouchdb": "3.5.0",
+    "react": "0.13.0",
+    "requirejs": "2.1.16",
+    "typed-immutable": "0.0.3"
+  }
+}
