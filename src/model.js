@@ -258,34 +258,6 @@ class Model {
   }
 
   /**
-   * Experiments: Analytics
-   */
-
-  async putExpEvents(id, events) {
-    var keySet = {};
-
-    events.forEach((event) => {
-      var key = [id, event.key].join(':');
-      keySet[key] = true;
-      this.timeseries.recordHit(key, event.timestamp, event.increment);
-    });
-
-    await Promise.join(
-      Promise.promisify(this.timeseries.exec)(),
-      this.redis.sadd(this.getKey('exp', id, 'eventTypes'), Object.keys(keySet))
-    );
-
-    return {
-      events: events.length,
-      eventTypes: Object.keys(keySet)
-    };
-  }
-
-  getExpEventTypes(id) {
-    return this.redis.smembers(this.getKey('exp', id, 'eventTypes'));
-  }
-
-  /**
    * My Build 
    */
 
@@ -304,28 +276,6 @@ class Model {
       return [expId, buildId];
     }
     return null;
-  }
-
-  /**
-   * News Feed
-   */
-
-  putNewsItem(profile, details) {
-    return this.redis.multi()
-      .lpush(this.getKey('news', ), JSON.stringify({
-        profile: profile,
-        details: details,
-        timestamp: getUnixTimestamp()
-      }))
-      .ltrim(this.getKey('news', ), 0, MAX_NEWS_ITEMS)
-      .exec();
-  }
-
-  getAllNewsItems() {
-    return Promise.map(
-      this.redis.lrange(this.getKey('news', ), 0, -1), 
-      JSON.parse
-    );
   }
 }
 

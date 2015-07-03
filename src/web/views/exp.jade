@@ -4,7 +4,7 @@ extends _layout
 block content
   .container.with-fixed-header
     .row
-      .col-sm-8
+      .col-sm-6.col-sm-offset-3
         .exp-header
           a(href='/exp/' + exp.id)
             h1.exp-name= exp.title
@@ -20,11 +20,7 @@ block content
               span.glyphicon.glyphicon-bookmark
               a(href='https://github.com/' + repo + '/tree/' + exp.branch)
                 = exp.branch
-        if !eventTypes.length
-          .alert.alert-info(role='alert').
-            There's no data to show yet.
 
-      .col-sm-4
         .panel.panel-default
           .panel-heading
             h3.panel-title Builds
@@ -57,7 +53,7 @@ block content
               each build in builds.reverse()
                 li.list-group-item
                   .clearfix
-                    a.build-number.pull-right(href='/builds/'+exp.id+'/'+build.id)
+                    .build-number.pull-right
                       ='#' + build.id
                     a.build-commit(href=build.commit.html_url)
                       code=build.commit.sha.slice(0,5)
@@ -65,7 +61,5 @@ block content
 
                   .clearfix
                     +action-info(build.profile, build.timestamp)
-
-                  
 
                 - buildId--;

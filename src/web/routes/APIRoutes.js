@@ -42,13 +42,4 @@ routes.post('/my', ensureAPIAuthenticated, async function(req, res) {
   }
 });
 
-routes.post('/my/events', ensureAPIAuthenticated, function(req, res) {
-  let expId = this.model.getMyExp(req.user.username);
-  if (expId) {
-    sendify(this.model.putExpEvents(expId, req.body.events), res);
-  } else {
-    sendAPIError(res, 400, 'User is not enrolled in any experiments.');
-  }
-});
-
 module.exports = routes;

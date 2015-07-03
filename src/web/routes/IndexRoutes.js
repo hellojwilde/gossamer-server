@@ -16,12 +16,8 @@ routes.get('/', async function (req, res) {
     return;
   }
 
-  let props = await Promise.props({
-    exps: this.model.getExpsByUsername(req.user.username),
-    news: this.model.getAllNewsItems()
-  });
-
-  renderWithDefaults(req, res, 'index', props);
+  let exps = await this.model.getExpsByUsername(req.user.username);
+  renderWithDefaults(req, res, 'index', {exps});
 });
 
 routes.get('/exp/new', ensureAuthenticated, ensureVouched, function (req, res) {
@@ -103,14 +99,7 @@ routes.post('/exp/new', ensureAuthenticated, ensureVouched, async function (req,
     (collaborator) => collaborator.login
   );
 
-  await Promise.join(
-    this.model.putExp(username, repo, branch, collaborators, title),
-    this.model.putNewsItem(profile, {
-      type: 'newExp',
-      title: title,
-      expId: expId
-    })
-  );
+  await this.model.putExp(username, repo, branch, collaborators, title);
 
   res.redirect('/exp/' + expId);
 });
@@ -121,8 +110,7 @@ routes.get('/exp/:expId', ensureAuthenticated, ensureCollaborator, async functio
     exp: this.model.getExpById(expId),
     builds: this.model.getAllExpBuilds(expId),
     buildLock: this.model.getExpBuildLock(expId),
-    buildLockMeta: this.model.getExpBuildLockMeta(expId),
-    eventTypes: this.model.getExpEventTypes(expId)
+    buildLockMeta: this.model.getExpBuildLockMeta(expId)
   });
 
   renderWithDefaults(req, res, 'exp', props);

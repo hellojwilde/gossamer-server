@@ -4,34 +4,7 @@ extends _layout
 block content
   .container.with-fixed-header
     .row
-      .news.col-sm-8
-        h3.news-heading What's happening
-
-        for item in news
-          .news-item
-            .news-item-timestamp.pull-right
-              =moment.unix(item.timestamp).fromNow()
-
-            a.news-item-user(href=item.profile.profileUrl)
-              img.news-item-user-avatar.img-circle(
-                src=item.profile._json.avatar_url, 
-                alt=item.profile.displayName + ' Avatar'
-              )
-              =item.profile.displayName
-
-            span.news-item-action
-              case item.details.type
-                when 'newExp'
-                  =' created '
-                  a(href='/exp/' + item.details.expId)= item.details.title
-                when 'newExpBuild'
-                  =' shipped '
-                  a(href='/builds/' + item.details.exp.id + '/' + item.details.id)
-                    = 'build #' + item.details.id
-                  =' of '
-                  a(href='/exp/' + item.details.exp.id)= item.details.exp.title
-
-      .col-sm-4
+      .col-sm-6.col-sm-offset-3
         .panel.panel-default
           .panel-heading
             h3.panel-title Your experiments
