@@ -19,10 +19,12 @@ routes.post('/handler', parser, async function(req, res) {
 
   if (secret !== null) {
     let signature = req.get('X-Hub-Signature');
+
     let hmac = crypto.createHmac('sha1', secret);
     hmac.update(req.rawBody);
-
-    if ('sha1=' + hmac.digest('hex') !== signature) {
+    let computedSignature = 'sha1=' + hmac.digest('hex');
+    
+    if (computedSignature !== signature) {
       res.status(401).end();
       return;
     }

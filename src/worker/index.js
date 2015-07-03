@@ -2,8 +2,8 @@ function worker(registry) {
   let {queue, actions} = registry;
 
   queue.handle('build-queue', async function(message, ack) {
-    console.log(`Shipping ${message.expId}`);
-    await actions.branch.ship(message.expId);
+    console.log(`Shipping ${message.branchId}`);
+    await actions.branch.ship(message.branchId);
     ack();
   });
 }

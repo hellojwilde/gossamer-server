@@ -3,24 +3,24 @@ let Promise = require('bluebird');
 
 let fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
 
-async function enqueueShip(expId, profile) {
-  let didGetLock = await this.model.putExpBuildLock(expId);
+async function enqueueShip(branchId) {
+  let didGetLock = await this.model.putBranchLock(branchId);
 
   // make sure that we don't create two instances of the same build at once
   if (didGetLock !== null) {
-    await this.model.putExpBuildLockMeta(expId, profile);
-    this.queue.publish('build-queue', {expId: expId});
+    await this.model.putBranchLockStatus(branchId, 'queued');
+    this.queue.publish('build-queue', {branchId: branchId});
   }
 }
 
-async function ship(expId) {
+async function ship(branchId) {
   // put a note on the lock that we're shipping the build now
-  await this.model.putExpBuildLockMetaStatus(expId, 'shipping');
+  await this.model.putBranchLockStatus(branchId, 'shipping');
 
   // fetch information from github about the thing that we're building:
   // - the place where we can download a full copy of the tree, and
   // - the specific commit that we're shipping, for the author's reference.
-  let [owner, repo, ref] = expId.split(':');
+  let [owner, repo, ref] = branchId.split(':');
   let github = new GitHub({version: '3.0.0'});
 
   let [archive, {commit}] = await Promise.all([
@@ -38,10 +38,9 @@ async function ship(expId) {
   ]);
 
   // fetch more information from redis about the experiment
-  let [latestBuildId, exp, buildLockMeta] = await Promise.all([
-    this.model.getLatestExpBuildId(expId),
-    this.model.getExpById(expId),
-    this.model.getExpBuildLockMeta(expId)
+  let [latestBuildId, exp] = await Promise.all([
+    this.model.getLatestExpBuildId(branchId),
+    this.model.getExpById(branchId)
   ]);
 
   let archiveUrl = archive.meta.location;
@@ -50,12 +49,12 @@ async function ship(expId) {
   // deploy the commit
   await fetchGitHubArchive(
     archiveUrl, 
-    this.model.getExpBuildWritableStream.bind(this.model, expId, buildId)
+    this.model.getExpBuildWritableStream.bind(this.model, branchId, buildId)
   );
 
   // store the build and delete the lock
-  await this.model.putExpBuild(expId, buildId, buildLockMeta.profile, commit);
-  await this.model.delExpBuildLock(expId);
+  await this.model.putExpBuild(branchId, buildId, null, commit);
+  await this.model.delBranchLock(branchId);
 }
 
 module.exports = {

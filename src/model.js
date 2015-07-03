@@ -102,6 +102,40 @@ class Model {
   }
 
   /**
+   * Branches: Locking
+   */
+  
+  putBranchLock(branchId) {
+    return this.redis.set(
+      this.getKey('branch', branchId, 'lock'), 
+      this.config.id, 
+      'NX'
+    );
+  }
+
+  getBranchLock(branchId) {
+    return this.redis.get(this.getKey('branch', branchId, 'lock'));
+  }
+
+  putBranchLockStatus(branchId, status) {
+    return this.redis.set(
+      this.getKey('branch', branchId, 'lock', 'status'),
+      status
+    );
+  }
+
+  getBranchLockStatus(branchId) {
+    return this.redis.get(this.getKey('branch', branchId, 'lock', 'status'));
+  }
+
+  delBranchLock(branchId) {
+    return this.redis.multi()
+      .del(this.getKey('branch', branchId, 'lock'))
+      .del(this.getKey('branch', branchId, 'lock', 'status'))
+      .exec();
+  }
+
+  /**
    * Experiments
    */
 
@@ -145,55 +179,6 @@ class Model {
       this.redis.smembers(this.getKey('user', username, 'exps')),
       this.getExpById.bind(this)
     );
-  }
-
-  /**
-   * Experiments: Build Lock
-   */
-
-  putExpBuildLock(expId) {
-    return this.redis.set(
-      this.getKey('exp', expId, 'lock'), 
-      this.config.id, 
-      'NX'
-    );
-  }
-
-  getExpBuildLock(expId) {
-    return this.redis.get(this.getKey('exp', expId, 'lock'));
-  }
-
-  putExpBuildLockMeta(expId, profile) {
-    return this.redis.hmset(this.getKey('exp', expId, 'lock', 'meta'), {
-      profile: JSON.stringify(profile),
-      timestamp: getUnixTimestamp(),
-      status: 'enqueued'
-    });
-  }
-
-  putExpBuildLockMetaStatus(expId, status) {
-    return this.redis.hset(
-      this.getKey('exp', expId, 'lock', 'meta'), 
-      'status',
-      status
-    );
-  }
-
-  async getExpBuildLockMeta(expId) {
-    let meta = await this.redis.hgetall(
-      this.getKey('exp', expId, 'lock', 'meta')
-    );
-    if (meta.profile) {
-      meta.profile = JSON.parse(meta.profile);
-    }
-    return meta;
-  }
-
-  delExpBuildLock(expId) {
-    return this.redis.multi()
-      .del(this.getKey('exp', expId, 'lock'))
-      .del(this.getKey('exp', expId, 'lock', 'meta'))
-      .exec();
   }
 
   /**

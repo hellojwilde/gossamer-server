@@ -110,20 +110,20 @@ routes.get('/exp/:expId', ensureAuthenticated, ensureCollaborator, async functio
   let props = await Promise.props({
     exp: this.model.getExpById(expId),
     builds: this.model.getAllExpBuilds(expId),
-    buildLock: this.model.getExpBuildLock(expId),
-    buildLockMeta: this.model.getExpBuildLockMeta(expId)
+    branchLock: this.model.getBranchLock(expId),
+    branchLockStatus: this.model.getBranchLockStatus(expId)
   });
 
   renderWithDefaults(req, res, 'exp', props);
 });
 
 routes.post('/exp/:expId/ship', ensureAuthenticated, ensureCollaborator, async function(req, res) {
-  await this.actions.branch.enqueueShip(req.params.expId, req.user.profile);
+  await this.actions.branch.enqueueShip(req.params.expId);
   res.redirect('/exp/' + req.params.expId);
 });
 
 routes.post('/exp/:expId/ship/unlock', ensureAuthenticated, ensureCollaborator, async function(req, res) {
-  await this.model.delExpBuildLock(req.params.expId);
+  await this.model.delBranchLock(req.params.expId);
   res.redirect('/exp/' + req.params.expId);
 });
 

@@ -25,7 +25,7 @@ block content
           .panel-heading
             h3.panel-title Builds
 
-          if buildLock
+          if branchLock
             .alert.alert-warning.build-lock
               form(method='post', action='/exp/' + exp.id + '/ship/unlock')
                 input.btn.btn-default.btn-xs.pull-right(
@@ -34,9 +34,8 @@ block content
                 )
 
               p 
-                span Shipment #{buildLockMeta.status}. 
+                span Shipment #{branchLockStatus}. 
                 span.glyphicon.glyphicon-lock
-              +action-info(buildLockMeta.profile, buildLockMeta.timestamp)
           else 
             .panel-body
               if !builds || !builds.length
