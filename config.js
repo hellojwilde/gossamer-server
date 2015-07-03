@@ -11,16 +11,16 @@ module.exports = {
   amqpUrl: process.env.CLOUDAMQP_URL || 'amqp://localhost',
 
   /**
-   * build configuration
-   */
-  buildsPath: path.join(__dirname, 'builds'),
-
-  /**
    * www configuration
    */
   port: parseInt(process.env.PORT, 10) || 3000,
   publicUrl: process.env.PUBLIC_URL || 'http://localhost:3000',
   sessionSecret: process.env.SESSION_SECRET,
+
+  /**
+   * project configuration
+   */
+  base: process.env.BASE || 'hellojwilde:gossamer:master',
   
   /**
    * api keys for Mozillians and GitHub

@@ -19,6 +19,7 @@ let GitHubStrategy = require('passport-github').Strategy;
 let IndexRoutes = require('./routes/IndexRoutes');
 let RedisSessionStore = require('connect-redis')(session);
 let UserRoutes = require('./routes/UserRoutes');
+let WebhookRoutes = require('./routes/WebhookRoutes');
 
 function web(registry) {
   let {model, config, redis, actions} = registry;
@@ -72,6 +73,7 @@ function web(registry) {
   server.use('/', IndexRoutes.getRouterForRegistry(registry));
   server.use('/my', BuildRoutes.getRouterForRegistry(registry));
   server.use('/user', UserRoutes.getRouterForRegistry(registry));
+  server.use('/webhook', WebhookRoutes.getRouterForRegistry(registry));
   server.use('/api/v1', APIRoutes.getRouterForRegistry(registry));
 
   // error handlers setup
