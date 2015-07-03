@@ -1,9 +1,10 @@
 mixin action-info(profile, timestamp)
-  a(href=profile.profileUrl)
-    img.action-info-user-avatar.img-circle(
-      src=profile._json.avatar_url, 
-      alt=profile.displayName + ' Avatar'
-    )
+  if profile && profile.profileUrl && profile.displayName
+    a(href=profile.profileUrl)
+      img.action-info-user-avatar.img-circle(
+        src=profile._json.avatar_url, 
+        alt=profile.displayName + ' Avatar'
+      )
   span.action-info-timestamp= moment.unix(timestamp).fromNow()
 
 mixin exp-info(exp)
