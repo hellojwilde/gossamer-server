@@ -1,3 +1,4 @@
+let bodyParser = require('body-parser');
 let express = require('express');
 let ensureAuthenticated = require('../helpers/ensureAuthenticated');
 let ensureCollaborator = require('../helpers/ensureCollaborator');
@@ -61,7 +62,7 @@ routes.get('/exp/new', ensureAuthenticated, ensureVouched, function (req, res) {
   });
 });
 
-routes.post('/exp/new', ensureAuthenticated, ensureVouched, async function (req, res) {
+routes.post('/exp/new', bodyParser.urlencoded({extended: false}), ensureAuthenticated, ensureVouched, async function (req, res) {
   function renderWithError(error) {
     renderWithDefaults(req, res, 'new-exp/3-meta', {
       error: error,

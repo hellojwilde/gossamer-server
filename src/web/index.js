@@ -1,4 +1,3 @@
-let bodyParser = require('body-parser');
 let cookieParser = require('cookie-parser');
 let express = require('express');
 let favicon = require('serve-favicon');
@@ -42,8 +41,6 @@ function web(registry) {
   // uncomment after placing your favicon in /public
   //server.use(favicon(__dirname + '/public/favicon.ico'));
   server.use(logger(config.dev));
-  server.use(bodyParser.json());
-  server.use(bodyParser.urlencoded({extended: false}));
   server.use(cookieParser());
   server.use(express.static(path.join(__dirname, 'public'), {
     setHeaders: function(res, path) {

@@ -94,6 +94,14 @@ class Model {
   }
 
   /**
+   * Repos
+   */
+  
+  getRepoSecret(repoId) {
+    return this.redis.get(this.getKey('repo', repoId, 'secret'));
+  }
+
+  /**
    * Experiments
    */
 

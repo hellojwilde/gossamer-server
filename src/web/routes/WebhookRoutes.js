@@ -1,20 +1,34 @@
+let bodyParser = require('body-parser');
+let crypto = require('crypto')
+
 let Routes = require('../helpers/Routes');
 
 let routes = new Routes();
+let parser = bodyParser.json({
+  verify: (req, res, buf, encoding) => req.rawBody = buf
+});
 
-routes.post('/handler', async function(req, res) {
-  let event = req.get('X-Github-Event');
-  let signature = req.get('X-Hub-Signature');
 
+routes.post('/handler', parser, async function(req, res) {
   let {repository, sender, ref} = req.body;
   let branch = ref.split('/')[2];
-  let branchId = [repository.owner.name, repository.name, branch].join(':');
+  let repoId = [repository.owner.name, repository.name].join(':')
+  let branchId = [repoId, branch].join(':');
 
-  console.log('HOOK called for ' + branchId);
+  let secret = await this.model.getRepoSecret(repoId);
 
-  // TODO: Validate signature for repoId.
+  if (secret !== null) {
+    let signature = req.get('X-Hub-Signature');
+    let hmac = crypto.createHmac('sha1', secret);
+    hmac.update(req.rawBody);
 
-  switch(event) {
+    if ('sha1=' + hmac.digest('hex') !== signature) {
+      res.status(401).end();
+      return;
+    }
+  }
+
+  switch(req.get('X-Github-Event')) {
     case 'push':
       await this.actions.branch.enqueueShip(branchId, req.body.sender);
       break;
