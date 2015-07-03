@@ -1,4 +1,4 @@
 module.exports = {
-  user: require('./user'),
-  exp: require('./exp')
+  user: require('./UserActions'),
+  branch: require('./BranchActions')
 };

@@ -17,9 +17,21 @@ async function sendBuildFile([expId, buildId], req, res, next) {
     return;
   }
 
+  let fileContent = file.buffer;
+
+  if (filePath === 'main.js') {
+    fileContent = file.buffer.toString().replace(
+      '{/* INJECTED_UPDATER_INFO */}',
+      JSON.stringify({
+        latestBuildIdUrl: this.config.publicUrl + '/api/v1/my/latest',
+        buildId: [expId, buildId].join('/')
+      })
+    );
+  }
+
   res.set('ETag', file.digest);
   res.set('Content-Type', mime.lookup(filePath));
-  res.send(file.buffer);
+  res.send(fileContent);
 }
 
 routes.get('/index.html', async function(req, res, next) {
@@ -48,6 +60,7 @@ routes.post('/index.html', ensureAuthenticated, async function(req, res) {
 
 routes.get('/*', ensureAuthenticated, async function(req, res, next) {
   let build = await this.model.getMyExpBuild(req.user.username);
+
   if (build === null) {
     res.end();
     return;

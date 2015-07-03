@@ -3,7 +3,7 @@ function worker(registry) {
 
   queue.handle('build-queue', async function(message, ack) {
     console.log(`Shipping ${message.expId}`);
-    await actions.exp.ship(message.expId);
+    await actions.branch.ship(message.expId);
     ack();
   });
 }

@@ -1,7 +1,7 @@
 let GitHub = require('github');
 let Promise = require('bluebird');
 
-let fetchArchiveAndShip = require('../helpers/fetchArchiveAndShip');
+let fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
 
 async function enqueueShip(expId, profile) {
   let didGetLock = await this.model.putExpBuildLock(expId);
@@ -48,21 +48,13 @@ async function ship(expId) {
   let buildId = latestBuildId + 1;
 
   // deploy the commit
-  await fetchArchiveAndShip(this, expId, buildId, archiveUrl);
+  await fetchGitHubArchive(
+    archiveUrl, 
+    this.model.getExpBuildWritableStream.bind(this.model, expId, buildId)
+  );
 
-  // store a build and news feed entry now that the deployment has finished
-  await Promise.all([
-    this.model.putExpBuild(expId, buildId, buildLockMeta.profile, commit),
-    this.model.putNewsItem(buildLockMeta.profile, {
-      type: 'newExpBuild',
-      id: buildId,
-      expId: expId,
-      exp: exp,
-      commit: commit
-    })
-  ]);
-
-  // clear the locks on the build
+  // store the build and delete the lock
+  await this.model.putExpBuild(expId, buildId, buildLockMeta.profile, commit);
   await this.model.delExpBuildLock(expId);
 }
 

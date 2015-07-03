@@ -117,7 +117,7 @@ routes.get('/exp/:expId', ensureAuthenticated, ensureCollaborator, async functio
 });
 
 routes.post('/exp/:expId/ship', ensureAuthenticated, ensureCollaborator, async function(req, res) {
-  await this.actions.exp.enqueueShip(req.params.expId, req.user.profile);
+  await this.actions.branch.enqueueShip(req.params.expId, req.user.profile);
   res.redirect('/exp/' + req.params.expId);
 });
 
