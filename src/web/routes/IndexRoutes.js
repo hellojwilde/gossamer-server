@@ -16,6 +16,7 @@ routes.get('/', async function(req, res) {
   }
 
   let props = await Promise.props({
+    isVouched: req.user.isVouched,
     base: this.model.getBranch(this.config.base),
     recent: this.model.getAllBranchesWithBuilds()
   });
