@@ -1,22 +1,15 @@
 let crypto = require('crypto');
+let getUnixTimestamp = require('./helpers/getUnixTimestamp');
 
 let Promise = require('bluebird');
-let TimeSeries = require('redis-timeseries');
 let {Writable} = require('stream');
 
-const MAX_NEWS_ITEMS = 100;
-
-function getUnixTimestamp() {
-  return Math.floor(new Date() / 1000);
-}
-
-class ModelExpBuildWritableStream extends Writable {
-  constructor(model, expId, buildId, filePath) {
+class BucketWritableStream extends Writable {
+  constructor(model, bucketId, filePath) {
     super();
 
     this.model = model;
-    this.expId = expId;
-    this.buildId = buildId;
+    this.bucketId = bucketId;
     this.filePath = filePath;
 
     this.buffers = [];
@@ -37,9 +30,8 @@ class ModelExpBuildWritableStream extends Writable {
   }
 
   _finish() {
-    return this.model.putExpBuildFile(
-      this.expId, 
-      this.buildId, 
+    return this.model.putBucketFile(
+      this.bucketId,
       this.filePath, 
       this.hash.digest('base64'), 
       Buffer.concat(this.buffers)
@@ -51,7 +43,6 @@ class Model {
   constructor(config, redis) {
     this.config = config;
     this.redis = redis;
-    this.timeseries = new TimeSeries(redis, this.getKey('stats'));
   }
 
   /**
@@ -102,6 +93,19 @@ class Model {
   }
 
   /**
+   * Branches
+   */
+  
+  getBranch(branchId) {
+    return Promise.props({
+      branchId: branchId,
+      latest: this.getLatestBranchBuild(branchId),
+      lock: this.getBranchLock(branchId),
+      lockStatus: this.getBranchLockStatus(branchId)
+    });
+  }
+
+  /**
    * Branches: Locking
    */
   
@@ -136,117 +140,91 @@ class Model {
   }
 
   /**
-   * Experiments
+   * Branches: Builds
    */
-
-  putExp(owner, repo, branch, collaborators, title) {
-    let id = this.getExpId(owner, repo, branch);
-    let transaction = this.redis.multi()
-      .hmset(this.getKey('exp', id), {id, owner, repo, branch, title});
-
-    collaborators.forEach((collaborator) => {
-      transaction.sadd(this.getKey('user', collaborator, 'exps'), id);
-    });
-
-    return transaction.exec();
-  }
-
-  getExpId(owner, repo, branch) {
-    return [owner, repo, branch].join(':');
-  }
-
-  haveExpById(id) {
-    return this.redis.exists(this.getKey('exp', id));
-  }
-
-  getExpById(id) {
-    return this.redis.hgetall(this.getKey('exp', id));
-  }
-
-  haveExpByUsernameId(username, id) {
-    return this.redis.sismember(this.getKey('user', username, 'exps'), id);
-  }
-
-  getAllExpsWithBuilds() {
-    return Promise.map(
-      this.redis.zrevrange('gos:exps', 0, -1),
-      this.getExpById.bind(this)
-    );
-  }
-
-  getExpsByUsername(username) {
-    return Promise.map(
-      this.redis.smembers(this.getKey('user', username, 'exps')),
-      this.getExpById.bind(this)
-    );
-  }
-
-  /**
-   * Experiments: Build Metadata
-   */
-
-  async putExpBuild(expId, buildId, profile, commit) {
+  
+  putBranchBuild(branchId, buildId, commit) {
     let timestamp = getUnixTimestamp();
 
-    await this.redis.multi()
-      .rpush(this.getKey('exp', expId, 'builds'), JSON.stringify({
-        id: buildId,
-        profile: profile,
-        commit: commit,
-        timestamp: timestamp
-      }))
-      .zadd('gos:exps', timestamp, expId)
+    return this.redis.multi()
+      .zadd(this.getKey('build'), timestamp, branchId)
+      .rpush(
+        this.getKey('build', branchId),
+        JSON.stringify({buildId, commit, timestamp})
+      )
       .exec();
   }
 
-  getLatestExpBuildId(expId) {
-    return this.redis.llen(this.getKey('exp', expId, 'builds'));
+  getLatestBranchBuildId(branchId) {
+    return this.redis.llen(this.getKey('build', branchId));
   }
 
-  getAllExpBuilds(expId) {
+  getLatestBranchBuild(branchId) {
+    return this.redis.lindex(
+      this.getKey('build', branchId), 
+      -1
+    ).then(JSON.parse);
+  }
+
+  getBranchBuildBucketId(branchId, buildId) {
+    return ['build', branchId, buildId].join('/');
+  }
+
+  getAllBranchesWithBuilds() {
     return Promise.map(
-      this.redis.lrange(this.getKey('exp', expId, 'builds'), 0, -1),
-      (value, index) => Object.assign(JSON.parse(value), {id: index+1})
+      this.redis.zrevrange(this.getKey('build'), 0, -1), 
+      this.getBranch.bind(this)
     );
   }
 
   /**
-   * Experiments: Build
+   * Blob
+   */
+
+  putBlob(digest, buffer) {
+    return this.redis.set(this.getKey('blob', digest), buffer);
+  }
+
+  haveBlob(digest) {
+    return this.redis.exists(this.getKey('blob', digest));
+  }
+
+  getBlobBuffer(digest) {
+    return this.redis.getBuffer(this.getKey('blob', digest));
+  }
+
+  /**
+   * Buckets
    */
   
-  getExpBuildWritableStream(expId, buildId, filePath) {
-    return new ModelExpBuildWritableStream(this, expId, buildId, filePath);
+  getBucketWritableStream(bucketId, filePath) {
+    return new BucketWritableStream(this, bucketId, filePath);
   }
 
-  async putExpBuildFile(expId, buildId, filePath, digest, buffer) {
-    let blobKey = this.getKey('blob', digest);
-    let blobExists = await this.redis.exists(blobKey);
+  async putBucketFile(bucketId, filePath, digest, buffer) {
+    let blobExists = await this.haveBlob(digest);
 
     if (!blobExists) {
-      await this.redis.set(blobKey, buffer);
+      await this.putBlob(digest, buffer);
     }
 
-    await this.redis.hset(
-      this.getKey('build', expId, buildId),
-      filePath, 
-      digest
-    );
+    await this.redis.hset(this.getKey('bucket', bucketId), filePath, digest);
   }
 
-  getExpBuildFileDigest(expId, buildId, filePath) {
-    return this.redis.hget(this.getKey('build', expId, buildId), filePath);
+  getBucketFileDigest(bucketId, filePath) {
+    return this.redis.hget(this.getKey('bucket', bucketId), filePath);
   }
 
-  async getExpBuildFile(expId, buildId, filePath) {
-    let digest = await this.getExpBuildFileDigest(expId, buildId, filePath);
+  async getBucketFile(bucketId, filePath) {
+    let digest = await this.getBucketFileDigest(bucketId, filePath);
 
     if (!digest) {
       return null;
     }
 
     return await Promise.props({
-      digest, 
-      buffer: this.redis.getBuffer(this.getKey('blob', digest))
+      digest: digest, 
+      buffer: this.getBlobBuffer(digest)
     });
   }
 
@@ -254,21 +232,23 @@ class Model {
    * My Build 
    */
 
-  putMyExp(username, expId) {
-    return this.redis.set(this.getKey('user', username, 'my'), expId);
+  putMyBranch(username, branchId) {
+    return this.redis.set(this.getKey('user', username, 'my'), branchId);
   }
 
-  getMyExp(username) {
-    return this.redis.get(this.getKey('user', username, 'my'));
-  }
-
-  async getMyExpBuild(username, baseUrl) {
-    let expId = await this.getMyExp(username);
-    if (expId) {
-      let buildId = await this.getLatestExpBuildId(expId);
-      return [expId, buildId];
+  async getMyBranch(username) {
+    if (!username) {
+      return this.config.base;
     }
-    return null;
+    
+    let branchId = await this.redis.get(this.getKey('user', username, 'my'));
+    return branchId || this.config.base;
+  }
+
+  async getMyBranchBuild(username) {
+    let branchId = await this.getMyBranch(username);
+    let buildId = await this.getLatestBranchBuildId(branchId);
+    return [branchId, buildId];
   }
 }
 

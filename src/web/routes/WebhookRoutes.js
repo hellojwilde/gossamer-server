@@ -8,7 +8,6 @@ let parser = bodyParser.json({
   verify: (req, res, buf, encoding) => req.rawBody = buf
 });
 
-
 routes.post('/handler', parser, async function(req, res) {
   let {repository, sender, ref} = req.body;
   let branch = ref.split('/')[2];
@@ -23,7 +22,7 @@ routes.post('/handler', parser, async function(req, res) {
     let hmac = crypto.createHmac('sha1', secret);
     hmac.update(req.rawBody);
     let computedSignature = 'sha1=' + hmac.digest('hex');
-    
+
     if (computedSignature !== signature) {
       res.status(401).end();
       return;

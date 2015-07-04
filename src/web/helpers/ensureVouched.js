@@ -1,5 +1,5 @@
 function ensureVouched(req, res, next) {
-  if (req.user.isVouched) {
+  if (req.user && req.user.isVouched) {
     next();
   }
 }

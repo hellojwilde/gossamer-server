@@ -10,10 +10,10 @@ let session = require('express-session');
 let errors = require('./helpers/errors');
 let logger = require('./helpers/logger');
 let renderWithDefaults = require('./helpers/renderWithDefaults');
+let serveBuild = require('./helpers/serveBuild');
 let {nodeify, nodeifySync} = require('./helpers/methods');
 
 let APIRoutes = require('./routes/APIRoutes');
-let BuildRoutes = require('./routes/BuildRoutes');
 let GitHubStrategy = require('passport-github').Strategy;
 let IndexRoutes = require('./routes/IndexRoutes');
 let RedisSessionStore = require('connect-redis')(session);
@@ -68,7 +68,7 @@ function web(registry) {
 
   // routes setup
   server.use('/', IndexRoutes.getRouterForRegistry(registry));
-  server.use('/my', BuildRoutes.getRouterForRegistry(registry));
+  server.use('/my', serveBuild(registry));
   server.use('/user', UserRoutes.getRouterForRegistry(registry));
   server.use('/webhook', WebhookRoutes.getRouterForRegistry(registry));
   server.use('/api/v1', APIRoutes.getRouterForRegistry(registry));

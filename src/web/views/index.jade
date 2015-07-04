@@ -1,30 +1,47 @@
-include _mixins
 extends _layout
+
+mixin branch(branch, isBase)
+  tr(class=isBase && 'info')
+    td
+      = branch.branchId
+      = ' '
+      if isBase
+        span.label.label-default.label-primary Base
+
+    if branch.latest && branch.latest.commit && branch.latest.timestamp
+      - var commit = branch.latest.commit
+      - var timestamp = branch.latest.timestamp
+
+      td
+        a(href=commit.html_url)
+          code= commit.sha.substr(0, 10)
+          = ' '
+          = commit.commit.message
+      td= moment.unix(timestamp).fromNow()
+    else
+      td(colspan='2') None yet
+
+    td
+      if branch.lock
+        span.label.label-default= branch.lockStatus
+        = ' '
+        if isVouched
+          form(method='post', action='/branch/' + branch.branchId + '/unlock')
+            input.btn.btn-default.btn-xs(type='submit', value='Unlock')
+      else
+        if isVouched
+          form(method='post', action='/branch/' + branch.branchId + '/ship')
+            input.btn.btn-default.btn-primary.btn-xs(type='submit', value='Ship')
 
 block content
   .container.with-fixed-header
-    .row
-      .col-sm-6.col-sm-offset-3
-        .panel.panel-default
-          .panel-heading
-            h3.panel-title Your experiments
-
-          .panel-body
-              if !exps || !exps.length
-                p You haven't created any experiments yet. Launch your first today.
-              a.btn.btn-default.btn-block.btn-primary.btn-sm(href='/exp/new').
-                New Experiment
-            
-          if exps && exps.length
-            ul.list-group
-              each exp in exps
-                li.list-group-item
-                  a.exp(href='/exp/' + exp.id)
-                    +exp-info(exp)
-                  
-
-
-
-
-
-        
+    table.table
+      thead
+        tr
+          th Branch
+          th(colspan='3') Last Shipped
+      tbody
+        +branch(base, true)
+        for branch in recent
+          if branch.branchId !== base.branchId
+            +branch(branch)

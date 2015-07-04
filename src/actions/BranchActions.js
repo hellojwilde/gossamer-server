@@ -5,17 +5,15 @@ let fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
 
 async function enqueueShip(branchId) {
   let didGetLock = await this.model.putBranchLock(branchId);
-
-  // make sure that we don't create two instances of the same build at once
   if (didGetLock !== null) {
-    await this.model.putBranchLockStatus(branchId, 'queued');
+    await this.model.putBranchLockStatus(branchId, 'Queued');
     this.queue.publish('build-queue', {branchId: branchId});
   }
 }
 
 async function ship(branchId) {
   // put a note on the lock that we're shipping the build now
-  await this.model.putBranchLockStatus(branchId, 'shipping');
+  await this.model.putBranchLockStatus(branchId, 'Shipping');
 
   // fetch information from github about the thing that we're building:
   // - the place where we can download a full copy of the tree, and
@@ -37,23 +35,21 @@ async function ship(branchId) {
     })
   ]);
 
-  // fetch more information from redis about the experiment
-  let [latestBuildId, exp] = await Promise.all([
-    this.model.getLatestExpBuildId(branchId),
-    this.model.getExpById(branchId)
-  ]);
-
+  let latestBuildId = await this.model.getLatestBranchBuildId(branchId);
   let archiveUrl = archive.meta.location;
   let buildId = latestBuildId + 1;
 
   // deploy the commit
   await fetchGitHubArchive(
-    archiveUrl, 
-    this.model.getExpBuildWritableStream.bind(this.model, branchId, buildId)
+    archiveUrl,
+    (filePath) => this.model.getBucketWritableStream(
+      this.model.getBranchBuildBucketId(branchId, buildId), 
+      filePath
+    )
   );
 
-  // store the build and delete the lock
-  await this.model.putExpBuild(branchId, buildId, null, commit);
+  // put branch and delete lock
+  await this.model.putBranchBuild(branchId, buildId, commit);
   await this.model.delBranchLock(branchId);
 }
 
