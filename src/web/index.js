@@ -12,6 +12,7 @@ let logger = require('./helpers/logger');
 let renderWithDefaults = require('./helpers/renderWithDefaults');
 let serveBuild = require('./helpers/serveBuild');
 let {nodeify, nodeifySync} = require('./helpers/methods');
+let {getKeyPrefix} = require('../models/Keys');
 
 let APIRoutes = require('./routes/APIRoutes');
 let GitHubStrategy = require('passport-github').Strategy;
@@ -21,7 +22,7 @@ let UserRoutes = require('./routes/UserRoutes');
 let WebhookRoutes = require('./routes/WebhookRoutes');
 
 function web(registry) {
-  let {model, config, redis, actions} = registry;
+  let {config, redis, actions} = registry;
   let server = express();
 
   // authentication setup
@@ -54,10 +55,7 @@ function web(registry) {
     resave: false,
     saveUninitialized: false,
     secret: config.sessionSecret,
-    store: new RedisSessionStore({
-      client: redis, 
-      prefix: model.getKeyPrefix('sess')
-    })
+    store: new RedisSessionStore({client: redis, prefix: getKeyPrefix('sess')})
   }));
   server.use(passport.initialize());
   server.use(passport.session());

@@ -5,7 +5,7 @@ function passportSerializeUserSync(user) {
 }
 
 function passportDeserializeUser(username) {
-  return this.model.getUser(username);
+  return this.models.user.get(username);
 }
 
 async function passportVerifyUser(accessToken, refreshToken, profile) {
@@ -14,7 +14,7 @@ async function passportVerifyUser(accessToken, refreshToken, profile) {
     this.config.mozilliansApiKey
   );
 
-  return await this.model.putUser(profile, accessToken, isVouched);
+  return await this.models.user.put(profile, accessToken, isVouched);
 }
 
 module.exports = {

@@ -14,7 +14,7 @@ routes.post('/handler', parser, async function(req, res) {
   let repoId = [repository.owner.name, repository.name].join(':')
   let branchId = [repoId, branch].join(':');
 
-  let secret = await this.model.getRepoSecret(repoId);
+  let secret = await this.models.repo.getSecret(repoId);
   if (secret !== null) {
     let signature = req.get('X-Hub-Signature');
 

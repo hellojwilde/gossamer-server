@@ -1,19 +1,42 @@
+const fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
+const fetchNodePackages = require('../helpers/fetchNodePackages');
+
 let GitHub = require('github');
 let Promise = require('bluebird');
 
-let fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
+const ShipTransformers = {
+  'main.js': function(buffer, options) {
+    return buffer.toString().replace(
+      '{/* INJECTED_UPDATER_INFO */}',
+      JSON.stringify({
+        latestBuildIdUrl: options.config.publicUrl + '/api/v1/my/latest',
+        buildId: options.build.join('/')
+      })
+    );
+  }
+};
+
+const ShipGenerators = {
+  'package.json': function(file, options) {
+    return Promise.resolve(file.buffer);
+  },
+
+  'webpack.config.js': function(file, options) {
+    return Promise.resolve(file.buffer);
+  }
+};
 
 async function enqueueShip(branchId) {
-  let didGetLock = await this.model.putBranchLock(branchId);
+  let didGetLock = await this.models.branch.putLock(branchId);
   if (didGetLock !== null) {
-    await this.model.putBranchLockStatus(branchId, 'Queued');
+    await this.models.branch.putLockStatus(branchId, 'Queued');
     this.queue.publish('build-queue', {branchId: branchId});
   }
 }
 
 async function ship(branchId) {
-  // put a note on the lock that we're shipping the build now
-  await this.model.putBranchLockStatus(branchId, 'Shipping');
+  // put a note on the lock that we're shipping the build now.
+  await this.models.branch.putLockStatus(branchId, 'Shipping');
 
   // fetch information from github about the thing that we're building:
   // - the place where we can download a full copy of the tree, and
@@ -35,22 +58,28 @@ async function ship(branchId) {
     })
   ]);
 
-  let latestBuildId = await this.model.getLatestBranchBuildId(branchId);
+  let latestBuildId = await this.models.branch.getLatesthBuildId(branchId);
   let archiveUrl = archive.meta.location;
   let buildId = latestBuildId + 1;
+  let bucketId = this.models.branch.getBuildBucketId(branchId, buildId);
+  let bucketFileSystem = this.model.getBucketFileSystem(bucketId);
 
-  // deploy the commit
+  // fetch the commit.
   await fetchGitHubArchive(
-    archiveUrl,
-    (filePath) => this.model.getBucketWritableStream(
-      this.model.getBranchBuildBucketId(branchId, buildId), 
-      filePath
+    archiveUrl, 
+    new TransformedFileSystem(
+      this.model.getBucketFileSystem(bucketId),
+      ShipTransformers,
+      {}
     )
   );
 
-  // put branch and delete lock
-  await this.model.putBranchBuild(branchId, buildId, commit);
-  await this.model.delBranchLock(branchId);
+  // create a new 
+  
+
+  // make the new build public and delete the lock.
+  await this.models.branch.putBuild(branchId, buildId, commit);
+  await this.models.branch.delLock(branchId);
 }
 
 module.exports = {

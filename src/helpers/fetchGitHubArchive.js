@@ -5,9 +5,10 @@ let tar = require('tar-stream');
 
 let Promise = require('bluebird');
 
-function fetchGitHubArchive(archiveUrl, writeStreamGetter) {
+function fetchGitHubArchive(archiveUrl, fileSystem) {
   return new Promise(function(resolve, reject) {
     let extract = tar.extract();
+    let filePaths = [];
 
     extract.on('entry', function(header, stream, next) {
       if (header.type !== 'file') {
@@ -18,13 +19,14 @@ function fetchGitHubArchive(archiveUrl, writeStreamGetter) {
 
       // Strip the top level directory from the tar that GitHub creates
       let filePath = header.name.split('/').slice(1).join('/');
-      let writeStream = writeStreamGetter(filePath);
+      let writeStream = fileSystem.createWriteStream(filePath);
 
+      filePaths.push(filePath);
       stream.pipe(writeStream);
       writeStream.on('finish', next);
     });
 
-    extract.on('finish', resolve);
+    extract.on('finish', () => resolve(filePaths));
 
     request(archiveUrl)
       .pipe(gunzip())

@@ -17,8 +17,8 @@ routes.get('/', async function(req, res) {
 
   let props = await Promise.props({
     isVouched: req.user.isVouched,
-    base: this.model.getBranch(this.config.base),
-    recent: this.model.getAllBranchesWithBuilds()
+    base: this.models.branch.get(this.config.base),
+    recent: this.models.branch.getAllWithBuilds()
   });
 
   renderWithDefaults(req, res, 'index', props);
@@ -30,7 +30,7 @@ routes.post('/branch/:branchId/ship', ensureVouched, async function(req, res) {
 });
 
 routes.post('/branch/:branchId/unlock', ensureVouched, async function(req, res) {
-  await this.model.delBranchLock(req.params.branchId);
+  await this.models.branch.delLock(req.params.branchId);
   res.redirect('/');
 });
 

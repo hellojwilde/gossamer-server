@@ -19,7 +19,9 @@ function sendAPIError(res, error, optErrorCode, optDetails) {
 let routes = new Routes();
 
 routes.get('/my/latest', async function(req, res) {
-  let build = await this.model.getMyBranchBuild(req.user && req.user.username);
+  let username = req.user && req.user.username;
+  let build = await this.models.user.getBranchBuild(username);
+
   sendAPISuccess(res, build.join('/'));
 });
 
