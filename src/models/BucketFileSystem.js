@@ -38,16 +38,19 @@ class BucketFileSystem {
   }
 
   async stat(filePath, callback) {
-    let fileExists = await this.model.getBucketFileExists(this.bucketId, filePath);
-    let filePathsMatching = await this.model.getBucketPathsMatching(this.bucketId, filePath+'*/*');
-
+    let fileExists = await this.model.exists(this.bucketId, filePath);
     if (fileExists) {
       callback(null, getStats(StatsType.FILE));
-    } else if (filePathsMatching.length > 0) {
-      callback(null, getStats(StatsType.DIRECTORY));
-    } else {
-      callback('filePath not found');
+      return;
     }
+
+    let filePathsMatching = await this.model.getMatchingPaths(this.bucketId, filePath+'*/*');
+    if (filePathsMatching.length > 0) {
+      callback(null, getStats(StatsType.DIRECTORY));
+      return;
+    }
+    
+    callback('filePath not found');
   }
   
   mkdirp(filePath, callback) { callback(null); }
@@ -55,8 +58,7 @@ class BucketFileSystem {
   rmdir(filePath, callback) { callback(null); }
 
   async readdir(filePath, callback) {
-    let filePathsMatching = await this.model.getBucketPathsMatching(this.bucketId, filePath+'*/*');
-
+    let filePathsMatching = await this.model.getMatchingPaths(this.bucketId, filePath+'*/*');
     if (filePathsMatching > 0) {
       callback(null, filePathsMatching);
     } else {
@@ -64,28 +66,31 @@ class BucketFileSystem {
     } 
   }
 
-  createWriteStream(filePath) {
-    return new BucketWriteStream(this.model, this.bucketId, filePath);
-  }
-
   async writeFile(filePath, data, callback) {
-    await this.model.putBucketFile(this.bucketId, filePath, data);
+    await this.model.put(this.bucketId, filePath, data);
     callback(null);
   }
 
   async unlink(filePath, callback) {
-    await this.model.delBucketFile(this.bucketId, filePath);
+    await this.model.del(this.bucketId, filePath);
     callback(null);
   }
 
   async readFile(filePath, callback) {
-    let file = await this.model.getBucketFile(this.bucketId, filePath);
-
+    let file = await this.model.get(this.bucketId, filePath);
     if (file && file.buffer) {
       callback(null, file.buffer);
     } else {
       callback('filePath not found');
     }
+  }
+
+  createWriteStream(filePath) {
+    return this.model.createWriteStream(this.bucketId, filePath);
+  }
+
+  createReadStream(filePath) {
+    return this.model.createReadStream(this.bucketId, filePath);
   }
 }
 

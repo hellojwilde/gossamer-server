@@ -6,6 +6,7 @@ const Promise = require('bluebird');
 class BranchModel {
   constructor(registry) {
     this.redis = registry.redis;
+    this.config = registry.config;
     this.registry = registry;
   }
 
