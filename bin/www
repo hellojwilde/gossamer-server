@@ -36,3 +36,7 @@ function onError(error) {
 function onListening() {
   console.log('Listening on ' + config.port);
 }
+
+process.on('unhandledRejection', function(reason, promise) {
+  console.error(reason, reason.stack);
+});
