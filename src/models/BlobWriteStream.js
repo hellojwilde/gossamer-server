@@ -6,20 +6,17 @@ class BlobWriteStream extends Writable {
 
     this._model = model;
     this._buffers = [];
+
+    this.on('finish', async () => {
+      let digest = await this._model.put(Buffer.concat(this._buffers));
+      this.emit('digest', digest);
+    });
   }
 
-  _write(chunk, encoding, next) {
-    let buffer = Buffer.isBuffer(chunk) ? chunk : new Buffer(chunk, encoding);
+  _write(chunk, enc, next) {
+    let buffer = Buffer.isBuffer(chunk) ? chunk : new Buffer(chunk, enc);
     this._buffers.push(buffer);    
     next();
-  }
-
-  end(chunk, encoding) {
-    this._write(chunk, encoding, () => {
-      this._model.put(Buffer.concat(this._buffers)).then((digest) => {
-        this.emit('finish', digest);
-      });
-    })
   }
 }
 

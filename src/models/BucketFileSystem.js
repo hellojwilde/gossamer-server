@@ -1,5 +1,3 @@
-const BucketWriteStream = require('./BucketWriteStream');
-
 const BUCKET_SEP = '/';
 
 const statsBoolTrue = () => true;
@@ -39,12 +37,17 @@ class BucketFileSystem {
 
   async stat(filePath, callback) {
     let fileExists = await this.model.exists(this.bucketId, filePath);
+
     if (fileExists) {
       callback(null, getStats(StatsType.FILE));
       return;
     }
 
-    let filePathsMatching = await this.model.getMatchingPaths(this.bucketId, filePath+'*/*');
+    let filePathsMatching = await this.model.getMatchingPaths(
+      this.bucketId, 
+      filePath+'*/*'
+    );
+
     if (filePathsMatching.length > 0) {
       callback(null, getStats(StatsType.DIRECTORY));
       return;
@@ -58,7 +61,11 @@ class BucketFileSystem {
   rmdir(filePath, callback) { callback(null); }
 
   async readdir(filePath, callback) {
-    let filePathsMatching = await this.model.getMatchingPaths(this.bucketId, filePath+'*/*');
+    let filePathsMatching = await this.model.getMatchingPaths(
+      this.bucketId, 
+      filePath+'*/*'
+    );
+
     if (filePathsMatching > 0) {
       callback(null, filePathsMatching);
     } else {
@@ -78,6 +85,7 @@ class BucketFileSystem {
 
   async readFile(filePath, callback) {
     let file = await this.model.get(this.bucketId, filePath);
+    
     if (file && file.buffer) {
       callback(null, file.buffer);
     } else {

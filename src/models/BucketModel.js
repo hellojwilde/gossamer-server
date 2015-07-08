@@ -13,6 +13,10 @@ class BucketModel {
     return this.registry.models.blob;
   }
 
+  bucketExists(bucketId) {
+    return this.redis.exists(getKey('bucket', bucketId));
+  }
+
   async put(bucketId, filePath, buffer) {
     let digest = await this.blob.put(buffer);
     await this.putDigest(bucketId, filePath, digest);
@@ -35,7 +39,7 @@ class BucketModel {
   }
 
   async get(bucketId, filePath) {
-    let digest = await this.getBucketFileDigest(bucketId, filePath);
+    let digest = await this.getDigest(bucketId, filePath);
 
     if (!digest) {
       return null;
@@ -60,14 +64,17 @@ class BucketModel {
       results = results.concat(newResults);
       cursor = newCursor;
     }
+
     return results;
   }
 
   createWriteStream(bucketId, filePath) {
     let stream = this.blob.createWriteStream();
-    stream.on('finish', (digest) => {
+
+    stream.on('digest', (digest) => {
       this.putDigest(bucketId, filePath, digest);
     });
+
     return stream;
   }
 

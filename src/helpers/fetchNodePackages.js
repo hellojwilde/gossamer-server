@@ -1,29 +1,38 @@
-let npm = require('npm');
-let tmp = require('tmp');
+const fs = require('fs');
+const npm = require('npm');
+const path = require('path');
+const tmp = require('tmp');
 
-let Promise = require('bluebird');
+const Promise = require('bluebird');
 
-const tmpDirPromise = function(options) {
-  let cleanupCallback;
-
-  return Promise.promisify(tmp.dir)(options)
-    .spread(function(path, done) {
-      cleanupCallback = done;
-      return path;
-    })
-    .disposer(() => cleanupCallback && cleanupCallback());
-}
-
+const fsWriteFilePromise = Promise.promisify(fs.writeFile);
+const tmpDirPromise = Promise.promisify(tmp.dir);
 const npmLoadPromise = Promise.promisify(npm.load);
-const npmInstallPromise = Promise.promisify(npm.install);
+const readdirPromise = Promise.promisify(require('recursive-readdir'));
 
-function fetchNodePackages(configObject, fileSystem) {
-  return Promise.using(tmpDirPromise({unsafeCleanup: true}), async function(path) {
-    await npmLoadPromise(configObject);
+async function fetchNodePackages(configObject, fileSystem) {
+  let [prefix, cleanupCallback] = await tmpDirPromise({unsafeCleanup: true});
 
-    let [installedModules, idealTree] = await npmInstallPromise(['.']);
-    console.log(installedModules, idealTree);
+  // Load our configuration and call the install command.
+  await fsWriteFilePromise(path.join(prefix, 'package.json'), JSON.stringify(configObject));
+  await npmLoadPromise({production: true, global: false});
+  npm.prefix = prefix;
+  await Promise.promisify(npm.commands.install)();
+
+  // Copy the temporary files that we just installed into a bucket.
+  let modulesPrefix = path.join(prefix, 'node_modules');
+  await Promise.each(readdirPromise(modulesPrefix), (filePath) => {
+    return new Promise((resolve, reject) => {
+      let localFilePath = path.relative(modulesPrefix, filePath);
+      let localWriteStream = fileSystem.createWriteStream(localFilePath);
+
+      localWriteStream.on('finish', resolve);
+      fs.createReadStream(filePath).pipe(localWriteStream);
+    });
   });
+  
+  // XXX this currently fails...need to figure out where the bug in node-tmp
+  // cleanupCallback();
 }
 
 module.exports = fetchNodePackages;

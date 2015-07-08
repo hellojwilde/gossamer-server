@@ -11,11 +11,13 @@ class BlobModel {
   }
 
   async put(buffer) {
-    let digest = optDigest || this.getDigest(buffer);
+    let digest = this.getDigest(buffer);
     let exists = await this.exists(digest);
+
     if (!exists) {
       await this.redis.set(getKey('blob', digest), buffer);
     }
+    
     return digest;
   }
 
