@@ -12,14 +12,16 @@ class BlobModel {
 
   async put(buffer) {
     let digest = this.getDigest(buffer);
-    let exists = await this.exists(digest);
 
-    if (!exists) {
-      await this.pg.none(
-        'insert into blobs(digest, file) values($1, $2)', 
+    await this.pg.tx(async (tx) => {
+      await tx.none('lock table blobs in share row exclusive mode'),
+      await tx.none(
+        'insert into blobs(digest, file) ' +
+        'select $1, $2' +
+        'where not exists (select * from blobs where digest=$1)',
         [digest, '\\x' + buffer.toString('hex')]
       );
-    }
+    });
 
     return digest;
   }

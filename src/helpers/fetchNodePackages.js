@@ -3,11 +3,12 @@ const Promise = require('bluebird');
 const fs = Promise.promisifyAll(require('fs'));
 const npm = Promise.promisifyAll(require('npm'));
 const path = require('path');
-const tmp = Promise.promisifyAll(require('tmp'));
 const readdirRecursiveAsync = Promise.promisify(require('recursive-readdir'));
+const rmdirAsync = Promise.promisify(require('rmdir'));
+const tmp = Promise.promisifyAll(require('tmp'));
 
 async function fetchNodePackages(configObject, bucketFileSystem) {
-  let [prefix, cleanupCallback] = await tmp.dirAsync({unsafeCleanup: true});
+  let [prefix, cleanupCallback] = await tmp.dirAsync();
 
   let modulesPath = path.join(prefix, 'node_modules');
   let modulesConfigPath = path.join(prefix, 'package.json');
@@ -27,8 +28,16 @@ async function fetchNodePackages(configObject, bucketFileSystem) {
       fs.createReadStream(filePath).pipe(bucketWriteStream);
     });
   });
+
+  console.log('cleaning up' + prefix);
   
-  // XXX this currently errors...need to figure out where the bug in node-tmp is
+  await Promise.all([
+    fs.unlinkAsync(modulesConfigPath),
+    rmdirAsync(modulesPath)
+  ]);
+
+  console.log('(cleaned up');
+
   cleanupCallback();
 }
 

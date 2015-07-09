@@ -36,6 +36,7 @@
     "redis-timeseries": "^0.4.0",
     "replacestream": "^2.1.0",
     "request": "^2.57.0",
+    "rmdir": "^1.1.0",
     "serve-favicon": "~2.2.1",
     "tar-stream": "^1.1.5",
     "tmp": "0.0.26"

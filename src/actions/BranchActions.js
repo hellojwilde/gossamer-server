@@ -14,8 +14,6 @@ const ShipOverlays = [
   {
     filePath: 'package.json',
     getOverlays: async function({buffer}) {
-      console.log(buffer.toString());
-
       let configObject = JSON.parse(buffer.toString());
 
       let {dependencies} = configObject;
