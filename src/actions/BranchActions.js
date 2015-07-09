@@ -1,10 +1,10 @@
-const fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
-const fetchNodePackages = require('../helpers/fetchNodePackages');
-const objectHash = require('json-hash');
-
 const BucketFileSystem = require('../models/BucketFileSystem');
 const GitHub = require('github');
 const Promise = require('bluebird');
+
+const fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
+const fetchNodePackages = require('../helpers/fetchNodePackages');
+const objectHash = require('json-hash');
 
 const github = new GitHub({version: '3.0.0'});
 const fetchGithubArchiveLink = Promise.promisify(github.repos.getArchiveLink);
@@ -14,16 +14,14 @@ const ShipOverlays = [
   {
     filePath: 'package.json',
     getOverlays: async function({buffer}) {
-      let configObject = JSON.parse(buffer.toString());
-
-      let {dependencies} = configObject;
+      let {dependencies} = JSON.parse(buffer.toString());;
       let depHash = objectHash.digest(dependencies);
       let depBucketId = ['npm', depHash].join('/');
       let depBucketExists = await this.models.bucket.bucketExists(depBucketId);
 
       if (!depBucketExists) {
         await fetchNodePackages(
-          configObject,
+          buffer,
           new BucketFileSystem(this.models.bucket, depBucketId)
         );
       }
