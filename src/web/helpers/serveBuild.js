@@ -1,12 +1,24 @@
-let path = require('path');
-let mime = require('mime');
+const path = require('path');
+const mime = require('mime');
 
 function serveBuild(registry) {
   return async function(req, res, next) {
-    let filePath = req.path.replace(/^\//, '');
-    let username = req.user && req.user.username;
-    let bucketId = await registry.model.getMyBranchBuildBucketId(username);
-    let file = await registry.model.getBucketFile(bucketId, filePath);
+    const username = req.user && req.user.username;
+    const branchId = await registry.models.user.getBranch(username);
+    const {bucketId, overlays} = await registry.models.branch.getLatestBuild(branchId);
+
+    const filePath = req.path.replace(/^\//, '');
+    const filePathSegments = filePath.split('/');
+
+    let relevantBucketId = bucketId;
+    let relevantFilePath = filePath;
+    
+    if (filePathSegments.length && overlays[filePathSegments[0]]) {
+      relevantBucketId = overlays[filePathSegments[0]];
+      relevantFilePath = filePathSegments.slice(1).join('/');
+    }
+
+    const file = await registry.models.bucket.get(relevantBucketId, relevantFilePath);
 
     if (file === null) {
       next();

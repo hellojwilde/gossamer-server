@@ -27,6 +27,7 @@
     "mkdirp": "^0.5.1",
     "moment": "^2.10.3",
     "morgan": "~1.5.3",
+    "node-libs-browser": "^0.5.2",
     "npm": "^2.12.1",
     "passport": "^0.2.2",
     "passport-github": "^0.1.5",
@@ -40,7 +41,8 @@
     "rmdir": "^1.1.0",
     "serve-favicon": "~2.2.1",
     "tar-stream": "^1.1.5",
-    "tmp": "0.0.26"
+    "tmp": "0.0.26",
+    "webpack": "^1.10.1"
   },
   "devDependencies": {
     "forewoman": "^0.3.0"

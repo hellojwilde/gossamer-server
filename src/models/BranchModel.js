@@ -19,6 +19,13 @@ class BranchModel {
     });
   }
 
+  getAllWithBuilds() {
+    return Promise.map(
+      this.redis.zrevrange(getKey('build'), 0, -1), 
+      this.get.bind(this)
+    );
+  }
+
   /**
    * Locking
    */
@@ -73,22 +80,17 @@ class BranchModel {
     return this.redis.llen(getKey('build', branchId));
   }
 
-  getLatestBuild(branchId) {
-    return this.redis.lindex(
-      getKey('build', branchId), 
-      -1
-    ).then(JSON.parse);
-  }
-
   getBuildBucketId(branchId, buildId) {
     return ['build', branchId, buildId].join('/');
   }
 
-  getAllWithBuilds() {
-    return Promise.map(
-      this.redis.zrevrange(getKey('build'), 0, -1), 
-      this.get.bind(this)
-    );
+  async getLatestBuild(branchId) {
+    let raw = await this.redis.lindex(getKey('build', branchId), -1);
+    let build = JSON.parse(raw);
+
+    return Object.assign(build, {
+      bucketId: this.getBuildBucketId(branchId, build.buildId)
+    });
   }
 }
 

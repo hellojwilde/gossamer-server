@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 class UserModel {
   constructor(registry) {
     this.redis = registry.redis;
+    this.config = registry.config;
     this.registry = registry;
   }
 
@@ -36,7 +37,7 @@ class UserModel {
   }
 
   putBranch(username, branchId) {
-    return this.redis.set(this.getKey('user', username, 'my'), branchId);
+    return this.redis.set(getKey('user', username, 'my'), branchId);
   }
 
   async getBranch(username) {
@@ -44,14 +45,8 @@ class UserModel {
       return this.config.base;
     }
     
-    let branchId = await this.redis.get(this.getKey('user', username, 'my'));
+    let branchId = await this.redis.get(getKey('user', username, 'my'));
     return branchId || this.config.base;
-  }
-
-  async getBranchBuild(username) {
-    let branchId = await this.getBranch(username);
-    let buildId = await this.branch.getLatestBuildId(branchId);
-    return [branchId, buildId];
   }
 }
 
