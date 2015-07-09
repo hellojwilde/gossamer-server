@@ -1,38 +1,35 @@
-const fs = require('fs');
-const npm = require('npm');
-const path = require('path');
-const tmp = require('tmp');
-
 const Promise = require('bluebird');
 
-const fsWriteFilePromise = Promise.promisify(fs.writeFile);
-const tmpDirPromise = Promise.promisify(tmp.dir);
-const npmLoadPromise = Promise.promisify(npm.load);
-const readdirPromise = Promise.promisify(require('recursive-readdir'));
+const fs = Promise.promisifyAll(require('fs'));
+const npm = Promise.promisifyAll(require('npm'));
+const path = require('path');
+const tmp = Promise.promisifyAll(require('tmp'));
+const readdirRecursiveAsync = Promise.promisify(require('recursive-readdir'));
 
-async function fetchNodePackages(configObject, fileSystem) {
-  let [prefix, cleanupCallback] = await tmpDirPromise({unsafeCleanup: true});
+async function fetchNodePackages(configObject, bucketFileSystem) {
+  let [prefix, cleanupCallback] = await tmp.dirAsync({unsafeCleanup: true});
 
-  // Load our configuration and call the install command.
-  await fsWriteFilePromise(path.join(prefix, 'package.json'), JSON.stringify(configObject));
-  await npmLoadPromise({production: true, global: false});
+  let modulesPath = path.join(prefix, 'node_modules');
+  let modulesConfigPath = path.join(prefix, 'package.json');
+  let modulesConfigFile = JSON.stringify(configObject);
+
+  await fs.writeFileAsync(modulesConfigPath, modulesConfigFile);
+  await npm.loadAsync({production: true, global: false});
   npm.prefix = prefix;
+
   await Promise.promisify(npm.commands.install)();
-
-  // Copy the temporary files that we just installed into a bucket.
-  let modulesPrefix = path.join(prefix, 'node_modules');
-  await Promise.each(readdirPromise(modulesPrefix), (filePath) => {
+  await Promise.each(readdirRecursiveAsync(modulesPath), (filePath) => {
     return new Promise((resolve, reject) => {
-      let localFilePath = path.relative(modulesPrefix, filePath);
-      let localWriteStream = fileSystem.createWriteStream(localFilePath);
+      let bucketFilePath = path.relative(modulesPath, filePath);
+      let bucketWriteStream = bucketFileSystem.createWriteStream(bucketFilePath);
 
-      localWriteStream.on('finish', resolve);
-      fs.createReadStream(filePath).pipe(localWriteStream);
+      bucketWriteStream.on('finish', resolve);
+      fs.createReadStream(filePath).pipe(bucketWriteStream);
     });
   });
   
-  // XXX this currently fails...need to figure out where the bug in node-tmp
-  // cleanupCallback();
+  // XXX this currently errors...need to figure out where the bug in node-tmp is
+  cleanupCallback();
 }
 
 module.exports = fetchNodePackages;

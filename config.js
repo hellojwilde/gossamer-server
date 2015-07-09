@@ -7,8 +7,9 @@ module.exports = {
    */
   id: randomstring.generate(),
   dev: !!process.env.DEV,
-  redisUrl: process.env.REDISCLOUD_URL || 'redis://localhost:6379',
   amqpUrl: process.env.CLOUDAMQP_URL || 'amqp://localhost',
+  pgUrl: process.env.DATABASE_URL || 'postgres://localhost:5432/postgres',
+  redisUrl: process.env.REDISCLOUD_URL || 'redis://localhost:6379',
 
   /**
    * www configuration

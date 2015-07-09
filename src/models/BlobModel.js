@@ -6,7 +6,7 @@ const BlobWriteStream = require('./BlobWriteStream');
 
 class BlobModel {
   constructor(registry) {
-    this.redis = registry.redis;
+    this.pg = registry.pg;
     this.registry = registry;
   }
 
@@ -15,24 +15,37 @@ class BlobModel {
     let exists = await this.exists(digest);
 
     if (!exists) {
-      await this.redis.set(getKey('blob', digest), buffer);
+      await this.pg.none(
+        'insert into blobs(digest, file) values($1, $2)', 
+        [digest, '\\x' + buffer.toString('hex')]
+      );
     }
-    
+
     return digest;
   }
 
-  exists(digest) {
-    return this.redis.exists(getKey('blob', digest));
+  async exists(digest) {
+    let results = await this.pg.oneOrNone(
+      'select digest from blobs where digest=$1', 
+      digest
+    );
+
+    return results !== null;
   }
 
   getDigest(buffer) {
     let hash = crypto.createHash('sha1');
     hash.update(buffer);
-    return hash.digest('base64');
+    return hash.digest('hex');
   }
 
-  get(digest) {
-    return this.redis.getBuffer(getKey('blob', digest));
+  async get(digest) {
+    let results = await this.pg.oneOrNone(
+      'select file from blobs where digest=$1',
+      digest
+    );
+
+    return results !== null ? new Buffer(results.file) : null;
   }
 
   createWriteStream() {
