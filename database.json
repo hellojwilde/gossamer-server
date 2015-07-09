@@ -1,0 +1,8 @@
+{
+  "dev": {
+    "driver": "pg",
+    "user": "jwilde",
+    "database": "postgres"
+  },
+  "prod": {"ENV": "DATABASE_URL"}
+}
