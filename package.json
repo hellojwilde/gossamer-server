@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "forewoman start --port 3000 --watch web=./src,worker=./src --env .env"
+    "start": "forewoman start --port 3000 --watch web=./src,worker=./src --env .env",
+    "postinstall": "node_modules/db-migrate/bin/db-migrate up"
   },
   "dependencies": {
     "babel": "^5.6.1",
