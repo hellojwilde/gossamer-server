@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
 const fetchNodePackages = require('../helpers/fetchNodePackages');
 const objectHash = require('json-hash');
+const now = require('performance-now');
 
 const github = new GitHub({version: '3.0.0'});
 const fetchGithubArchiveLink = Promise.promisify(github.repos.getArchiveLink);
@@ -49,6 +50,8 @@ async function enqueueShip(branchId) {
 async function ship(branchId) {
   await this.models.branch.putLockStatus(branchId, 'Shipping');
 
+  const start = now();
+
   // fetch information from github about the thing that we're building:
   // - the place where we can download a full copy of the tree, and
   // - the specific commit that we're shipping, for the author's reference.
@@ -57,34 +60,41 @@ async function ship(branchId) {
   // to be of a different commit from the commit information we pull down, 
   // so we don't use that commit data for anything important.
   
-  let [owner, repo, ref] = branchId.split(':');
-
-  github.authenticate({type:'oauth', key: this.config.githubClientId, secret: this.config.githubClientSecret});
-  let [archive] = await Promise.all([
-    fetchGithubArchiveLink({
+  const [owner, repo, ref] = branchId.split(':');
+  const [archive, {commit}] = await Promise.all([
+    () => fetchGithubArchiveLink({
       user: owner,
       repo: repo,
       ref: ref,
       archive_format: 'tarball'
     }),
-    // fetchGithubBranch({
-    //   user: owner,
-    //   repo: repo,
-    //   branch: ref
-    // })
-  ]);
+    () => fetchGithubBranch({
+      user: owner,
+      repo: repo,
+      branch: ref
+    })
+  ].map((fetcher) => {
+    // in order to get a reasonable API rate limit, we have to authenticate
+    
+    github.authenticate({
+      type:'oauth', 
+      key: this.config.githubClientId, 
+      secret: this.config.githubClientSecret
+    });
+    return fetcher();
+  }));
 
-  let latestBuildId = await this.models.branch.getLatestBuildId(branchId);
-  let buildId = latestBuildId + 1;
-  let bucketId = this.models.branch.getBuildBucketId(branchId, buildId);
-  let bucketFileSystem = new BucketFileSystem(this.models.bucket, bucketId);
+  const latestBuildId = await this.models.branch.getLatestBuildId(branchId);
+  const buildId = latestBuildId + 1;
+  const bucketId = this.models.branch.getBuildBucketId(branchId, buildId);
+  const bucketFileSystem = new BucketFileSystem(this.models.bucket, bucketId);
 
   await fetchGitHubArchive(archive.meta.location, bucketFileSystem);
 
   // generate and merge overlays; an overlay is a series of symlinks that we
   // output when we find certain files (like build scripts).
   
-  let overlayArray = await Promise.map(ShipOverlays, async (trigger) => {
+  const overlayArray = await Promise.map(ShipOverlays, async (trigger) => {
     let {filePath, getOverlays} = trigger;
     let exists = await this.models.bucket.exists(bucketId, filePath);
 
@@ -96,9 +106,14 @@ async function ship(branchId) {
     return null;
   });
 
-  let overlays = Object.assign({}, ...overlayArray);
+  await this.models.branch.putBuild(
+    branchId, 
+    buildId, 
+    {sha: commit.sha, message: commit.commit.message, html_url: commit.html_url},
+    Object.assign({}, ...overlayArray),
+    ((now() - start) / 1000).toFixed(2)
+  );
 
-  await this.models.branch.putBuild(branchId, buildId, null, overlays);
   await this.models.branch.delLock(branchId);
 }
 

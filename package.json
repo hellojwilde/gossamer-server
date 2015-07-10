@@ -31,6 +31,7 @@
     "npm": "^2.12.1",
     "passport": "^0.2.2",
     "passport-github": "^0.1.5",
+    "performance-now": "^0.2.0",
     "pg-promise": "^1.7.6",
     "randomstring": "^1.0.6",
     "recursive-readdir": "^1.2.1",

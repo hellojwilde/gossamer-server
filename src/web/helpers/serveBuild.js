@@ -12,7 +12,7 @@ function serveBuild(registry) {
 
     let relevantBucketId = bucketId;
     let relevantFilePath = filePath;
-    
+
     if (filePathSegments.length && overlays[filePathSegments[0]]) {
       relevantBucketId = overlays[filePathSegments[0]];
       relevantFilePath = filePathSegments.slice(1).join('/');

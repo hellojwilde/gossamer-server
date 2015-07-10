@@ -8,16 +8,19 @@ mixin branch(branch, isBase)
       if isBase
         span.label.label-default.label-primary Base
 
-    if branch.latest && branch.latest.commit && branch.latest.timestamp
-      - var commit = branch.latest.commit
-      - var timestamp = branch.latest.timestamp
-
+    if branch.latest && branch.latest.commit && branch.latest.timestamp && branch.latest.duration
       td
+        - var commit = branch.latest.commit
+
         a(href=commit.html_url)
-          code= commit.sha.substr(0, 10)
+          code= commit.sha.substr(0, 5)
           = ' '
-          = commit.commit.message
-      td= moment.unix(timestamp).fromNow()
+          = commit.message.length < 30 ? commit.message : commit.message.substr(0, 30) + '...'
+
+      td= branch.latest.duration + ' seconds'
+
+      td= moment.unix(branch.latest.timestamp).fromNow()
+
     else
       td(colspan='2') None yet
 
@@ -39,7 +42,7 @@ block content
       thead
         tr
           th Branch
-          th(colspan='3') Last Shipped
+          th(colspan='4') Last Shipment
       tbody
         +branch(base, true)
         for branch in recent
