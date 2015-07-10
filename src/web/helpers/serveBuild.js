@@ -8,10 +8,12 @@ function serveBuild(registry) {
     const {bucketId, overlays} = await registry.models.branch.getLatestBuild(branchId);
 
     const filePath = req.path.replace(/^\//, '');
-    const filePathSegments = filePath.split('/');
+    const filePathSegments = filePath.split('/').reduce((valid, seg) => {
+      return seg.length > 0 ? valid.concat(seg) : valid;
+    }, []);
 
     let relevantBucketId = bucketId;
-    let relevantFilePath = filePath;
+    let relevantFilePath = filePathSegments.join('/');
 
     if (filePathSegments.length && overlays[filePathSegments[0]]) {
       relevantBucketId = overlays[filePathSegments[0]];
