@@ -2,6 +2,8 @@
 
 A centralized place for easily installable browser experiments.
 
+For more information on the larger project this is a part of, view the readme at [https://github.com/hellojwilde/gossamer](https://github.com/hellojwilde/gossamer)
+
 ## Prerequisites
 
 - Node
