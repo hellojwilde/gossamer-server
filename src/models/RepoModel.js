@@ -6,7 +6,7 @@ class RepoModel {
     this.registry = registry;
   }
 
-  getSecret() {
+  getSecret(repoId) {
     return this.redis.get(getKey('repo', repoId, 'secret'));
   }
 }
