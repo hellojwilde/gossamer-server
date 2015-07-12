@@ -70,7 +70,7 @@ const ShipInternalSteps = [
     name: 'fetchBranch',
     action: async function({archiveUrl, branchId, commit}) {
       const bucketId = ['github', branchId, commit.sha].join('/');
-      const bucketIdExists = await this.models.bucket.bucketExists(bucketId);
+      const bucketIdExists = await this.models.bucket.exists(bucketId);
 
       if (!bucketIdExists) {
         await fetchGitHubArchive(
@@ -93,7 +93,7 @@ const ShipInternalSteps = [
       const {dependencies, devDependencies} = JSON.parse(buffer.toString());
       const hash = objectHash.digest({dependencies, devDependencies});
       const bucketId = ['npm', hash].join('/');
-      const bucketIdExists = await this.models.bucket.bucketExists(bucketId);
+      const bucketIdExists = await this.models.bucket.exists(bucketId);
 
       if (!bucketIdExists) {
         await fetchNodePackages(
@@ -165,7 +165,7 @@ async function ship(branchId) {
   });
 
   console.log(util.inspect(performance));
-  console.log(Stats.jsonToString(ctx.webpack))
+  console.log(ctx.webpack.toString({modules: true, chunks: false}));
 
   // await this.models.branch.putBuild(
   //   branchId, 

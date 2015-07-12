@@ -15,8 +15,19 @@ function getFilePathSlice(filePath, ...sliceArgs) {
   return '/' + getFilePathSegments(filePath).slice(...sliceArgs).join('/');
 }
 
+function getFilePathAncestors(filePath) {
+  const segments = getFilePathSegments(filePath).slice(0, -1);
+
+  return segments.reduceRight((ancestors, segment) => {
+    return ancestors
+      .map((ancestor) => `/${segment}${ancestor}`)
+      .concat([`/${segment}`])
+  }, []).concat(['/']);
+}
+
 module.exports = {
   normalizeFilePath,
   getFilePathSegment,
-  getFilePathSlice
+  getFilePathSlice,
+  getFilePathAncestors
 };

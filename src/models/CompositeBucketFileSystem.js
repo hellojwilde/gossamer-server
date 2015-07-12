@@ -42,8 +42,6 @@ class CompositeBucketFileSystem {
 ['join', 'stat', 'readlink', 'readFile', 'createReadStream']
   .forEach((methodName) => {
     CompositeBucketFileSystem.prototype[methodName] = function(filePath, ...rest) {
-      console.log('cbfs', methodName, filePath)
-
       const normalizedFilePath = normalizeFilePath(filePath);
       const overlay = this.overlays[getFilePathSegment(normalizedFilePath, 0)];
 

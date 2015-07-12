@@ -45,13 +45,13 @@ class BucketFileSystem {
   }
 
   async stat(filePath, callback) {
-    let fileExists = await this.model.exists(this.bucketId, filePath);
+    let fileExists = await this.model.existsFile(this.bucketId, filePath);
     if (fileExists) {
       return returnValue(callback, null, getStats(StatsType.FILE));
     }
 
-    let filePathsMatching = await this.readdir(filePath, emptyFunction);
-    if (filePathsMatching && filePathsMatching.length > 0) {
+    let fileAncestorExists = await this.model.existsFileAncestor(this.bucketId, filePath);
+    if (fileAncestorExists) {
       return returnValue(callback, null, getStats(StatsType.DIRECTORY));
     }
     
@@ -80,17 +80,17 @@ class BucketFileSystem {
   }
 
   async writeFile(filePath, data, callback) {
-    await this.model.put(this.bucketId, filePath, data);
+    await this.model.putFile(this.bucketId, filePath, data);
     return returnValue(callback);
   }
 
   async unlink(filePath, callback) {
-    await this.model.del(this.bucketId, filePath);
+    await this.model.delFile(this.bucketId, filePath);
     return returnValue(callback);
   }
 
   async readFile(filePath, callback) {
-    let file = await this.model.get(this.bucketId, filePath);
+    let file = await this.model.getFile(this.bucketId, filePath);
     if (file && file.buffer) {
       return returnValue(callback, null, file.buffer);
     } else {

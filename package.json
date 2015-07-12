@@ -31,7 +31,7 @@
     "mkdirp": "^0.5.1",
     "moment": "^2.10.3",
     "morgan": "~1.5.3",
-    "node-libs-browser": "^0.5.2",
+    "node-libs-browser": "hellojwilde/node-libs-browser",
     "npm": "^2.12.1",
     "passport": "^0.2.2",
     "passport-github": "^0.1.5",
