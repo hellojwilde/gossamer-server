@@ -116,18 +116,17 @@ const ShipInternalSteps = [
     action: async function(context, fileSystem) {
       const buffer = await fileSystem.readFile('webpack.config.js');
       const bucketId = 'webpack';
-
-      console.log(util.inspect(getWebpackConfig(buffer)))
-
       const webpack = await webpackAsync(
         fileSystem, 
         new BucketFileSystem(this.models.bucket, bucketId),
         getWebpackConfig(buffer)
       );
 
+      console.log(webpack.toString({modules: true, chunks: false}));
+
       return {
         buckets: [{folder: '.build', bucketId: bucketId}], 
-        webpack: webpack
+        webpack: webpack.toString({modules: true, chunks: false})
       };
     }
   }
@@ -135,7 +134,6 @@ const ShipInternalSteps = [
 
 async function enqueueShip(branchId) {
   let didGetLock = await this.models.branch.putLock(branchId);
-
   if (didGetLock !== null) {
     await this.models.branch.putLockStatus(branchId, 'Queued');
     this.queue.publish('build-queue', {branchId: branchId});
@@ -145,8 +143,7 @@ async function enqueueShip(branchId) {
 async function ship(branchId) {
   await this.models.branch.putLockStatus(branchId, 'Shipping');
 
-  let ctx = {branchId: branchId, buckets: []};
-  let performance = [];
+  let ctx = {branchId: branchId, buckets: [], performance: []};
 
   await Promise.each(ShipInternalSteps, async ({name, action}) => {
     console.log('Step: ' + name);
@@ -154,27 +151,18 @@ async function ship(branchId) {
     const start = now();
     const fileSystem = new CompositeBucketFileSystem(this.models.bucket, ctx.buckets);
     const newCtx = await action.call(this, ctx, fileSystem);
+    const newCtxWithPerf = Object.assign({}, newCtx, {
+      performance: [{name: name, time: now() - start}]
+    });
 
-    merge(ctx, newCtx, (a, b) => {
+    merge(ctx, newCtxWithPerf, (a, b) => {
       if (Array.isArray(a)) {
         return a.concat(b);
       }
     });
-
-    performance.push({'name': name, 'time': now() - start});
   });
 
-  console.log(util.inspect(performance));
-  console.log(ctx.webpack.toString({modules: true, chunks: false}));
-
-  // await this.models.branch.putBuild(
-  //   branchId, 
-  //   buildId, 
-  //   {sha: commit.sha, message: commit.commit.message, html_url: commit.html_url},
-  //   Object.assign({}, ...overlayArray),
-  //   ((now() - start) / 1000).toFixed(2)
-  // );
-
+  await this.models.branch.putBuild(branchId, ctx);
   await this.models.branch.delLock(branchId);
 }
 

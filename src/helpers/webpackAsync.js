@@ -20,6 +20,7 @@ async function webpackAsync(inputFileSystem, outputFileSystem, options) {
 
   compiler.options = options;
   compiler.options.context = '/';
+  compiler.options.output.path = '/';
   compiler.options.resolve.extensions = ['', '.js'];
 
   compiler.options.target = function(compiler) {
@@ -53,6 +54,8 @@ async function webpackAsync(inputFileSystem, outputFileSystem, options) {
   );
   compiler.apply(new relativeNodeSourcePlugin());
 
+
+
   compiler.outputFileSystem = outputFileSystem;
   compiler.watchFileSystem = null;
 
@@ -64,7 +67,6 @@ async function webpackAsync(inputFileSystem, outputFileSystem, options) {
 
   compiler.emitRecords = function(callback) {
     console.log('EMIT RECORDS')
-    console.log(JSON.stringify(this.records));
     callback();
   }.bind(compiler);
 

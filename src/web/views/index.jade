@@ -8,7 +8,7 @@ mixin branch(branch, isBase)
       if isBase
         span.label.label-default.label-primary Base
 
-    if branch.latest && branch.latest.commit && branch.latest.timestamp && branch.latest.duration
+    if branch.latest && branch.latest.commit
       td
         - var commit = branch.latest.commit
 
@@ -17,9 +17,12 @@ mixin branch(branch, isBase)
           = ' '
           = commit.message.length < 30 ? commit.message : commit.message.substr(0, 30) + '...'
 
-      td= branch.latest.duration + ' seconds'
+      - var performance = branch.latest.performance || []
+      - var duration = performance.reduce(function(total, item) {return total + item.time/1000}, 0)
 
-      td= moment.unix(branch.latest.timestamp).fromNow()
+      td= duration.toFixed(2) + ' seconds'
+
+      td= branch.latest.timestamp && moment.unix(branch.latest.timestamp).fromNow()
 
     else
       td(colspan='2') None yet

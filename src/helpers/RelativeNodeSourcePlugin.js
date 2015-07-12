@@ -1,3 +1,6 @@
+// Based on https://github.com/webpack/webpack/blob/webpack-2/lib/node/NodeSourcePlugin.js
+// MIT License
+
 const ModuleAliasPlugin = require("enhanced-resolve/lib/ModuleAliasPlugin");
 const ModuleParserHelpers = require("webpack/lib/ModuleParserHelpers");
 const NodeLibsBrowser = require("node-libs-browser");

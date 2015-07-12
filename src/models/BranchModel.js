@@ -64,14 +64,14 @@ class BranchModel {
    * Build
    */
   
-  putBuild(branchId, buildId, commit, overlays, duration) {
+  putBuild(branchId, ctx) {
     const timestamp = getUnixTimestamp();
 
     return this.redis.multi()
       .zadd(getKey('build'), timestamp, branchId)
       .rpush(
         getKey('build', branchId), 
-        JSON.stringify({buildId, commit, timestamp, overlays, duration})
+        JSON.stringify(Object.assign(ctx, {timestamp: timestamp}))
       )
       .exec();
   }

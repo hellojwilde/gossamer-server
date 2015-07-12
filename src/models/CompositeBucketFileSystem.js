@@ -57,8 +57,6 @@ class CompositeBucketFileSystem {
   });
 
 CompositeBucketFileSystem.prototype.readdir = async function(filePath, callback) {
-  console.log(filePath);
-
   const normalizedFilePath = normalizeFilePath(filePath);
   const overlaySegment = getFilePathSegment(normalizedFilePath, 0);
   const overlay = this.overlays[overlaySegment];
