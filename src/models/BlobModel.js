@@ -10,7 +10,8 @@ class BlobModel {
     this.registry = registry;
   }
 
-  async put(buffer) {
+  async put(input) {
+    let buffer = Buffer.isBuffer(input) ? input : new Buffer(input);
     let digest = this.getDigest(buffer);
 
     await this.pg.tx(async (tx) => {

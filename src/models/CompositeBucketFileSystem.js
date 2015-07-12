@@ -1,4 +1,5 @@
 const BucketFileSystem = require('./BucketFileSystem');
+const BucketFileSystemWithPrefix = require('./BucketFileSystemWithPrefix');
 
 const {
   normalizeFilePath, 
@@ -6,14 +7,6 @@ const {
   getFilePathSlice
 } = require('./Paths');
 
-const emptyFunction = () => {};
-const returnValue = (callback, err, result) => {
-  callback && callback(err, result);
-  if (err && !callback) {
-    throw err;
-  }
-  return result;
-}
 
 class CompositeBucketFileSystem {  
   constructor(model, fileSystemConfigs) {
@@ -27,7 +20,7 @@ class CompositeBucketFileSystem {
       if (folder === null) {
         this.base = fs;
       } else {
-        this.overlays[folder] = fs;
+        this.overlays[folder] = new BucketFileSystemWithPrefix(fs);
       }
     });
   }
@@ -39,43 +32,15 @@ class CompositeBucketFileSystem {
 
 // we only implement the read-only methods.
 
-['join', 'stat', 'readlink', 'readFile', 'createReadStream']
+['join', 'stat', 'readlink', 'readFile', 'createReadStream', 'readdir']
   .forEach((methodName) => {
     CompositeBucketFileSystem.prototype[methodName] = function(filePath, ...rest) {
       const normalizedFilePath = normalizeFilePath(filePath);
       const overlay = this.overlays[getFilePathSegment(normalizedFilePath, 0)];
+      const fileSystem = overlay || this.base;
 
-      if (overlay) {
-        return overlay[methodName](
-          getFilePathSlice(normalizedFilePath, 1),
-          ...rest
-        );
-      }
-
-      return this.base[methodName](normalizedFilePath, ...rest);
+      return fileSystem[methodName](normalizedFilePath, ...rest);
     };
   });
-
-CompositeBucketFileSystem.prototype.readdir = async function(filePath, callback) {
-  const normalizedFilePath = normalizeFilePath(filePath);
-  const overlaySegment = getFilePathSegment(normalizedFilePath, 0);
-  const overlay = this.overlays[overlaySegment];
-
-  if (overlay) {
-    const overlayContents = await overlay[methodName](
-      getFilePathSlice(normalizedFilePath, 1),
-      emptyFunction
-    );
-
-    return returnValue(
-      callback,
-      null, 
-      overlayContents.map(content => '/' + overlaySegment + content)
-    );
-  }
-
-  const contents = await this.base[methodName](normalizedFilePath, emptyFunction);
-  return returnValue(callback, null, contents);
-}
 
 module.exports = CompositeBucketFileSystem;

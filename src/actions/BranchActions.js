@@ -143,7 +143,7 @@ async function enqueueShip(branchId) {
 async function ship(branchId) {
   await this.models.branch.putLockStatus(branchId, 'Shipping');
 
-  let ctx = {branchId: branchId, buckets: [], performance: []};
+  let ctx = {branchId: branchId, buckets: [{folder: '.build', bucketId: 'webpack'}], performance: []};
 
   await Promise.each(ShipInternalSteps, async ({name, action}) => {
     console.log('Step: ' + name);

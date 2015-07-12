@@ -8,6 +8,7 @@ const RelativeNodeSourcePlugin = require("./RelativeNodeSourcePlugin");
 const WebpackCompiler = require('webpack/lib/Compiler');
 const WebpackOptionsApply = require('webpack/lib/WebpackOptionsApply');
 const WebpackOptionsDefaulter = require('webpack/lib/WebpackOptionsDefaulter');
+const BucketFileSystemWithPrefix = require('../models/BucketFileSystemWithPrefix');
 
 async function webpackAsync(inputFileSystem, outputFileSystem, options) {
   const compiler = new WebpackCompiler();
@@ -20,9 +21,8 @@ async function webpackAsync(inputFileSystem, outputFileSystem, options) {
 
   compiler.options = options;
   compiler.options.context = '/';
-  compiler.options.output.path = '/';
   compiler.options.resolve.extensions = ['', '.js'];
-
+  compiler.options.recordsPath = '/.build/records.json';
   compiler.options.target = function(compiler) {
     compiler.apply(
       new JsonpTemplatePlugin(options.output),
@@ -31,7 +31,7 @@ async function webpackAsync(inputFileSystem, outputFileSystem, options) {
     );
   };
 
-  compiler.options = new WebpackOptionsApply().process(options, compiler);
+  compiler.options = new WebpackOptionsApply().process(compiler.options, compiler);
 
   compiler.inputFileSystem = cachedInputFileSystem;
 
@@ -54,19 +54,8 @@ async function webpackAsync(inputFileSystem, outputFileSystem, options) {
   );
   compiler.apply(new relativeNodeSourcePlugin());
   
-  compiler.outputFileSystem = outputFileSystem;
+  compiler.outputFileSystem =  new BucketFileSystemWithPrefix(outputFileSystem, '.build');
   compiler.watchFileSystem = null;
-
-  compiler.readRecords = function(callback) {
-    console.log('READ RECORDS')
-    this.records = {};
-    callback();
-  }.bind(compiler);
-
-  compiler.emitRecords = function(callback) {
-    console.log('EMIT RECORDS')
-    callback();
-  }.bind(compiler);
 
   compiler.applyPlugins('environment');
   compiler.applyPlugins('after-environment');
