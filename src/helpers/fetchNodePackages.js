@@ -13,7 +13,7 @@ async function fetchNodePackages(configFileBuffer, bucketFileSystem) {
   const modulesConfigPath = path.join(prefix, 'package.json');
 
   await fs.writeFileAsync(modulesConfigPath, configFileBuffer);
-  await npm.loadAsync({production: true, global: false});
+  await npm.loadAsync({production: false, global: false});
   npm.prefix = prefix;
 
   await Promise.promisify(npm.commands.install)();

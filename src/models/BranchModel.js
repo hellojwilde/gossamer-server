@@ -86,11 +86,7 @@ class BranchModel {
 
   async getLatestBuild(branchId) {
     let raw = await this.redis.lindex(getKey('build', branchId), -1);
-    let build = JSON.parse(raw);
-
-    return Object.assign(build, {
-      bucketId: this.getBuildBucketId(branchId, build.buildId)
-    });
+    return JSON.parse(raw);
   }
 }
 

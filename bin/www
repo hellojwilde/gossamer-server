@@ -38,5 +38,5 @@ function onListening() {
 }
 
 process.on('unhandledRejection', function(reason, promise) {
-  console.error(reason, reason.stack);
+  console.error('UNHANDLED REJECTION', reason, reason.stack);
 });

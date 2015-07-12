@@ -5,6 +5,7 @@ require('babel/register')({stage: 0});
 var config = require('../config');
 var worker = require('../src/worker');
 var app = require('../src/app');
+var util = require('util');
 
 app(config).then(function(registry) {
   console.log('Worker started');
@@ -12,5 +13,5 @@ app(config).then(function(registry) {
 });
 
 process.on('unhandledRejection', function(reason, promise) {
-  console.error(reason, reason.stack);
+  console.error('UNHANDLED REJECTION', reason, reason.stack);
 });

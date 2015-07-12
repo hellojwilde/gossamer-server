@@ -1,4 +1,5 @@
 const {getKey} = require('./Keys');
+const {normalizeFilePath} = require('./Paths');
 
 const Promise = require('bluebird');
 
@@ -23,19 +24,32 @@ class BucketModel {
   }
 
   putDigest(bucketId, filePath, digest) {
-    return this.redis.hset(getKey('bucket', bucketId), filePath, digest);
+    return this.redis.hset(
+      getKey('bucket', bucketId),
+      normalizeFilePath(filePath), 
+      digest
+    );
   }
 
   del(bucketId, filePath) {
-    return this.redis.hdel(getKey('bucket', bucketId), filePath);
+    return this.redis.hdel(
+      getKey('bucket', bucketId),
+      normalizeFilePath(filePath)
+    );
   }
 
   exists(bucketId, filePath) {
-    return this.redis.hexists(getKey('bucket', bucketId), filePath);
+    return this.redis.hexists(
+      getKey('bucket', bucketId),
+      normalizeFilePath(filePath)
+    );
   }
 
   getDigest(bucketId, filePath) {
-    return this.redis.hget(getKey('bucket', bucketId), filePath);
+    return this.redis.hget(
+      getKey('bucket', bucketId),
+      normalizeFilePath(filePath)
+    );
   }
 
   async get(bucketId, filePath) {
@@ -52,19 +66,29 @@ class BucketModel {
   }
 
   async getMatchingPaths(bucketId, filePathPattern) {
-    let fetch = cursor => this.redis.hscan(
-      getKey('bucket', bucketId), 
-      cursor,
-      filePathPattern
-    );
+    let results = [];
+    let cursor = '0';
 
-    let [cursor, results] = await fetch(0);
-    while (cursor !== 0) {
-      let [newCursor, newResults] = await fetch(cursor);
-      results = results.concat(newResults);
+    let fetch = async () => {
+      let [newCursor, newResults] = await this.redis.hscan(
+        getKey('bucket', bucketId), 
+        cursor,
+        'match',
+        filePathPattern
+      );
+
       cursor = newCursor;
+      newResults.forEach((result, idx) => {
+        if (idx % 2 === 0){
+          results.push(result);
+        }
+      });
     }
 
+    await fetch();
+    while (cursor != '0') {
+      await fetch();
+    }
     return results;
   }
 
