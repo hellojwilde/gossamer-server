@@ -1,37 +1,23 @@
-const path = require('path');
+const CompositeBucketFileSystem = require('../../models/CompositeBucketFileSystem');
+
 const mime = require('mime');
 
 function serveBuild(registry) {
   return async function(req, res, next) {
     const username = req.user && req.user.username;
     const branchId = await registry.models.user.getBranch(username);
-    const {bucketId, overlays} = await registry.models.branch.getLatestBuild(branchId);
-
-    const filePath = req.path.replace(/^\//, '');
-    const filePathSegments = filePath.split('/').reduce((valid, seg) => {
-      return seg.length > 0 ? valid.concat(seg) : valid;
-    }, []);
-
-    let relevantBucketId = bucketId;
-    let relevantFilePath = filePathSegments.join('/');
-
-    if (filePathSegments.length && overlays[filePathSegments[0]]) {
-      relevantBucketId = overlays[filePathSegments[0]];
-      relevantFilePath = filePathSegments.slice(1).join('/');
-    }
-
-    const file = await registry.models.bucket.get(relevantBucketId, relevantFilePath);
+    const {buckets} = await registry.models.branch.getLatestBuild(branchId);
+    const fileSystem = new CompositeBucketFileSystem(registry.models.bucket, buckets);
+    const file = await fileSystem.readFile(req.path);
 
     if (file === null) {
       next();
       return;
     }
 
-    res.set('ETag', file.digest);
-    res.set('Content-Type', mime.lookup(filePath));
-    res.send(file.buffer);
+    res.set('Content-Type', mime.lookup(req.path));
+    res.send(file);
   }
 }
-
 
 module.exports = serveBuild;

@@ -17,6 +17,7 @@ async function app(config) {
 
   await new Promise((resolve, reject) => {
     queue.on('connected', () => queue.create('build-queue', {}, resolve));
+    queue.on('disconnected', (err) => err && reject(err));
   }).timeout(CONNECT_TIMEOUT);
 
   registry.models = mapValues(Models, (model) => new model(registry));

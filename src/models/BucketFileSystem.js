@@ -1,5 +1,14 @@
 const BUCKET_SEP = '/';
 
+const emptyFunction = () => {};
+const returnValue = (callback, err, result) => {
+  callback && callback(err, result);
+  if (err && !callback) {
+    throw err;
+  }
+  return result;
+}
+
 const statsBoolTrue = () => true;
 const statsBoolFalse = () => false;
 const statsBool = (bool) => bool ? statsBoolTrue : statsBoolFalse;
@@ -11,8 +20,8 @@ const StatsType = {
 
 function getStats(type) {
   return {
-    isFile: statsBoolean(type === StatsType.FILE),
-    isDirectory: statsBoolean(type === StatsType.DIRECTORY),
+    isFile: statsBool(type === StatsType.FILE),
+    isDirectory: statsBool(type === StatsType.DIRECTORY),
     isBlockDevice: statsBoolFalse,
     isCharacterDevice: statsBoolFalse,
     isSymbolicLink: statsBoolFalse,
@@ -32,64 +41,60 @@ class BucketFileSystem {
   }
 
   join(...pieces) {
-    return pieces.join(BUCKET_SEP);
+    return pieces.filter((piece) => piece && piece.length > 0).join(BUCKET_SEP);
   }
 
   async stat(filePath, callback) {
-    let fileExists = await this.model.exists(this.bucketId, filePath);
-
+    let fileExists = await this.model.existsFile(this.bucketId, filePath);
     if (fileExists) {
-      callback(null, getStats(StatsType.FILE));
-      return;
+      return returnValue(callback, null, getStats(StatsType.FILE));
     }
 
-    let filePathsMatching = await this.model.getMatchingPaths(
-      this.bucketId, 
-      filePath+'*/*'
-    );
-
-    if (filePathsMatching.length > 0) {
-      callback(null, getStats(StatsType.DIRECTORY));
-      return;
+    let fileAncestorExists = await this.model.existsFileAncestor(this.bucketId, filePath);
+    if (fileAncestorExists) {
+      return returnValue(callback, null, getStats(StatsType.DIRECTORY));
     }
     
-    callback('filePath not found');
+    return returnValue(callback, `BucketFileSystem.stat: ${filePath} not found`);
   }
   
-  mkdirp(filePath, callback) { callback(null); }
-  mkdir(filePath, callback) { callback(null); }
-  rmdir(filePath, callback) { callback(null); }
+  async mkdirp(filePath, callback) {return returnValue(callback);}
+  async mkdir(filePath, callback)  {return returnValue(callback);}
+  async rmdir(filePath, callback)  {return returnValue(callback);}
 
   async readdir(filePath, callback) {
     let filePathsMatching = await this.model.getMatchingPaths(
       this.bucketId, 
-      filePath+'*/*'
+      filePath.replace(/\/$/, '')+'/*'
     );
 
-    if (filePathsMatching > 0) {
-      callback(null, filePathsMatching);
+    if (filePathsMatching.length > 0) {
+      return returnValue(callback, null, filePathsMatching);
     } else {
-      callback('filePath not found');
+      return returnValue(callback, `BucketFileSystem.readdir: ${filePath} not found`);
     } 
   }
 
+  async readlink(filePath, callback) {
+    return returnValue(callback, 'BucketFileSystem.readlink: links not supported');
+  }
+
   async writeFile(filePath, data, callback) {
-    await this.model.put(this.bucketId, filePath, data);
-    callback(null);
+    await this.model.putFile(this.bucketId, filePath, data);
+    return returnValue(callback);
   }
 
   async unlink(filePath, callback) {
-    await this.model.del(this.bucketId, filePath);
-    callback(null);
+    await this.model.delFile(this.bucketId, filePath);
+    return returnValue(callback);
   }
 
   async readFile(filePath, callback) {
-    let file = await this.model.get(this.bucketId, filePath);
-    
+    let file = await this.model.getFile(this.bucketId, filePath);
     if (file && file.buffer) {
-      callback(null, file.buffer);
+      return returnValue(callback, null, file.buffer);
     } else {
-      callback('filePath not found');
+      return returnValue(callback, `BucketFileSystem.readFile: ${filePath} not found`);
     }
   }
 

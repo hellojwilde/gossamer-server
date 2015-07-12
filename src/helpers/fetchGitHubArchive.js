@@ -3,6 +3,7 @@ let request = require('request');
 let tar = require('tar-stream');
 
 let Promise = require('bluebird');
+let BlobWriteStream = require('../models/BlobWriteStream');
 
 function fetchGitHubArchive(archiveUrl, fs) {
   return new Promise(function(resolve, reject) {
@@ -18,10 +19,14 @@ function fetchGitHubArchive(archiveUrl, fs) {
 
       // Strip the top level directory from the tar that GitHub creates
       let filePath = header.name.split('/').slice(1).join('/');
-
       let writeStream = fs.createWriteStream(filePath);
+      if (writeStream instanceof BlobWriteStream) {
+        writeStream.on('digest', () => next());
+      } else {
+        writeStream.on('finish', () => next());
+      }
+
       stream.pipe(writeStream);
-      writeStream.on('finish', next);
     });
 
     request(archiveUrl)

@@ -1,4 +1,5 @@
 const {getKey} = require('./Keys');
+const {normalizeFilePath, getFilePathAncestors} = require('./Paths');
 
 const Promise = require('bluebird');
 
@@ -13,33 +14,55 @@ class BucketModel {
     return this.registry.models.blob;
   }
 
-  bucketExists(bucketId) {
+  exists(bucketId) {
     return this.redis.exists(getKey('bucket', bucketId));
   }
 
-  async put(bucketId, filePath, buffer) {
-    let digest = await this.blob.put(buffer);
-    await this.putDigest(bucketId, filePath, digest);
+  async putFile(bucketId, filePath, buffer) {
+    const digest = await this.blob.put(buffer);
+    await this.putFileDigest(bucketId, filePath, digest);
   }
 
-  putDigest(bucketId, filePath, digest) {
-    return this.redis.hset(getKey('bucket', bucketId), filePath, digest);
+  putFileDigest(bucketId, filePath, digest) {
+    const normalizedFilePath = normalizeFilePath(filePath);
+    const ancestors = getFilePathAncestors(normalizedFilePath);
+
+    return Promise.all([
+      this.redis.hset(getKey('bucket', bucketId), normalizedFilePath, digest),
+      this.redis.sadd(getKey('bucket', bucketId, 'ancestors'), ...ancestors)
+    ]);
   }
 
-  del(bucketId, filePath) {
-    return this.redis.hdel(getKey('bucket', bucketId), filePath);
+  unlinkFile(bucketId, filePath) {
+    return this.redis.hdel(
+      getKey('bucket', bucketId),
+      normalizeFilePath(filePath)
+    );
   }
 
-  exists(bucketId, filePath) {
-    return this.redis.hexists(getKey('bucket', bucketId), filePath);
+  existsFile(bucketId, filePath) {
+    return this.redis.hexists(
+      getKey('bucket', bucketId),
+      normalizeFilePath(filePath)
+    );
   }
 
-  getDigest(bucketId, filePath) {
-    return this.redis.hget(getKey('bucket', bucketId), filePath);
+  existsFileAncestor(bucketId, filePath) {
+    return this.redis.sismember(
+      getKey('bucket', bucketId, 'ancestors'),
+      normalizeFilePath(filePath)
+    );
   }
 
-  async get(bucketId, filePath) {
-    let digest = await this.getDigest(bucketId, filePath);
+  getFileDigest(bucketId, filePath) {
+    return this.redis.hget(
+      getKey('bucket', bucketId),
+      normalizeFilePath(filePath)
+    );
+  }
+
+  async getFile(bucketId, filePath) {
+    let digest = await this.getFileDigest(bucketId, filePath);
 
     if (!digest) {
       return null;
@@ -51,20 +74,30 @@ class BucketModel {
     });
   }
 
-  async getMatchingPaths(bucketId, filePathPattern) {
-    let fetch = cursor => this.redis.hscan(
-      getKey('bucket', bucketId), 
-      cursor,
-      filePathPattern
-    );
+  async getMatchingFilePaths(bucketId, filePathPattern) {
+    let results = [];
+    let cursor = '0';
 
-    let [cursor, results] = await fetch(0);
-    while (cursor !== 0) {
-      let [newCursor, newResults] = await fetch(cursor);
-      results = results.concat(newResults);
+    let fetch = async () => {
+      let [newCursor, newResults] = await this.redis.hscan(
+        getKey('bucket', bucketId), 
+        cursor,
+        'match',
+        filePathPattern
+      );
+
       cursor = newCursor;
+      newResults.forEach((result, idx) => {
+        if (idx % 2 === 0){
+          results.push(result);
+        }
+      });
     }
 
+    await fetch();
+    while (cursor != '0') {
+      await fetch();
+    }
     return results;
   }
 
@@ -72,7 +105,7 @@ class BucketModel {
     let stream = this.blob.createWriteStream();
 
     stream.on('digest', (digest) => {
-      this.putDigest(bucketId, filePath, digest);
+      this.putFileDigest(bucketId, filePath, digest);
     });
 
     return stream;
