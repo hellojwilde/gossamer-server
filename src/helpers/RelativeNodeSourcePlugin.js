@@ -74,8 +74,6 @@ async function getPlugin(compiler, options) {
         });
       }
 
-      console.log('ALIAS', alias);
-
       if(Object.keys(alias).length > 0) {
         compiler.resolvers.normal.apply(
           new ModuleAliasPlugin(alias)
