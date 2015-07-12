@@ -33,12 +33,12 @@ async function webpackAsync(inputFileSystem, outputFileSystem, options) {
 
   compiler.options = new WebpackOptionsApply().process(options, compiler);
 
-  compiler.inputFileSystem = cachedInputFileSystem;
+  compiler.inputFileSystem = inputFileSystem;
 
-  compiler.resolvers.context.fileSystem = cachedInputFileSystem;
+  compiler.resolvers.context.fileSystem = inputFileSystem;
   compiler.resolvers.context.type = 'context';
 
-  compiler.resolvers.normal.fileSystem = cachedInputFileSystem;
+  compiler.resolvers.normal.fileSystem = inputFileSystem;
   compiler.resolvers.normal.type = 'normal';
 
   compiler.resolvers.loader.fileSystem = cachedNodeFileSystem;
@@ -53,9 +53,7 @@ async function webpackAsync(inputFileSystem, outputFileSystem, options) {
     options.node
   );
   compiler.apply(new relativeNodeSourcePlugin());
-
-
-
+  
   compiler.outputFileSystem = outputFileSystem;
   compiler.watchFileSystem = null;
 

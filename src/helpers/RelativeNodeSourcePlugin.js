@@ -39,7 +39,7 @@ async function getPlugin(compiler, options) {
       if (this.options.process) {
         var processType = this.options.process;
         compiler.parser.plugin("expression process", function() {
-          return ModuleParserHelpers.addParsedVariable(this, "process", "require(" + JSON.stringify(getPathToModule("process", processType)) + ")");
+          return ModuleParserHelpers.addParsedVariable(this, "process", "require(" + JSON.stringify(alias['process$']) + ")");
         });
       }
 
@@ -53,26 +53,28 @@ async function getPlugin(compiler, options) {
       if(this.options.console) {
         var consoleType = this.options.console;
         compiler.parser.plugin("expression console", function() {
-          return ModuleParserHelpers.addParsedVariable(this, "console", "require(" + JSON.stringify(getPathToModule("console", consoleType)) + ")");
+          return ModuleParserHelpers.addParsedVariable(this, "console", "require(" + JSON.stringify(alias["console$"]) + ")");
         });
       }
 
       var bufferType = this.options.Buffer;
       if(bufferType) {
         compiler.parser.plugin("expression Buffer", function() {
-          return ModuleParserHelpers.addParsedVariable(this, "Buffer", "require(" + JSON.stringify(getPathToModule("buffer", bufferType)) + ").Buffer");
+          return ModuleParserHelpers.addParsedVariable(this, "Buffer", "require(" + JSON.stringify(alias["buffer$"]) + ").Buffer");
         });
       }
 
       if(this.options.setImmediate) {
         var setImmediateType = this.options.setImmediate;
         compiler.parser.plugin("expression setImmediate", function() {
-          return ModuleParserHelpers.addParsedVariable(this, "setImmediate", "require(" + JSON.stringify(getPathToModule("timers", setImmediateType)) + ").setImmediate");
+          return ModuleParserHelpers.addParsedVariable(this, "setImmediate", "require(" + JSON.stringify(alias["timers$"]) + ").setImmediate");
         });
         compiler.parser.plugin("expression clearImmediate", function() {
-          return ModuleParserHelpers.addParsedVariable(this, "clearImmediate", "require(" + JSON.stringify(getPathToModule("timers", setImmediateType)) + ").clearImmediate");
+          return ModuleParserHelpers.addParsedVariable(this, "clearImmediate", "require(" + JSON.stringify(alias["timers$"]) + ").clearImmediate");
         });
       }
+
+      console.log('ALIAS', alias);
 
       if(Object.keys(alias).length > 0) {
         compiler.resolvers.normal.apply(

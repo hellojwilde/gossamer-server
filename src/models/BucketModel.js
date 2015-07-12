@@ -104,7 +104,7 @@ class BucketModel {
   createWriteStream(bucketId, filePath) {
     let stream = this.blob.createWriteStream();
 
-    stream.on('digest', (digest) => {
+    stream.once('digest', (digest) => {
       this.putFileDigest(bucketId, filePath, digest);
     });
 
