@@ -1,12 +1,9 @@
+const {returnValue, returnNotImplemented} = require('../helpers/Return');
+
 const BUCKET_SEP = '/';
 
-const emptyFunction = () => {};
-const returnValue = (callback, err, result) => {
-  callback && callback(err, result);
-  if (err && !callback) {
-    throw err;
-  }
-  return result;
+const returnNotFound = (callback, method, filePath) => {
+  return returnValue(callback, `File ${filePath} not found during ${method}`)
 }
 
 const statsBoolTrue = () => true;
@@ -55,9 +52,9 @@ class BucketFileSystem {
       return returnValue(callback, null, getStats(StatsType.DIRECTORY));
     }
     
-    return returnValue(callback, `BucketFileSystem.stat: ${filePath} not found`);
+    return returnNotFound(callback, 'stat', filePath);
   }
-  
+
   async mkdirp(filePath, callback) {return returnValue(callback);}
   async mkdir(filePath, callback)  {return returnValue(callback);}
   async rmdir(filePath, callback)  {return returnValue(callback);}
@@ -71,12 +68,12 @@ class BucketFileSystem {
     if (filePathsMatching.length > 0) {
       return returnValue(callback, null, filePathsMatching);
     } else {
-      return returnValue(callback, `BucketFileSystem.readdir: ${filePath} not found`);
+      return returnNotFound(callback, 'readdir', filePath);
     } 
   }
 
   async readlink(filePath, callback) {
-    return returnValue(callback, 'BucketFileSystem.readlink: links not supported');
+    return returnNotImplemented(callback, 'readlink', [filePath]);
   }
 
   async writeFile(filePath, data, callback) {
@@ -94,7 +91,7 @@ class BucketFileSystem {
     if (file && file.buffer) {
       return returnValue(callback, null, file.buffer);
     } else {
-      return returnValue(callback, `BucketFileSystem.readFile: ${filePath} not found`);
+      return returnNotFound(callback, 'readFile', filePath);
     }
   }
 

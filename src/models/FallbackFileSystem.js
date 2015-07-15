@@ -1,13 +1,5 @@
 const Promise = require('bluebird');
-
-const emptyFunction = () => {};
-const returnValue = (callback, err, result) => {
-  callback && callback(err, result);
-  if (err && !callback) {
-    throw err;
-  }
-  return result;
-}
+const {returnValue, returnNotImplemented} = require('../helpers/Return');
 
 class FallbackFileSystem {
   constructor(fses) {
@@ -17,26 +9,37 @@ class FallbackFileSystem {
   isSync() {
     return false;
   }
+
+  join(...args) {
+    return this.fses[0].join(...args);
+  }
+
+  readlink(filePath, callback) {
+    return returnNotImplemented(callback, 'readlink', [filePath]);
+  }
+
+  createReadStream(filePath) {
+    throw 'createReadStream is not implemented.';
+  }
 }
 
-['join', 'stat', 'readlink', 'readFile', 'createReadStream']
-  .forEach((methodName) => {
-    FallbackFileSystem.prototype[methodName] = async function(...args) {
-      const beforeCallback = args.slice(0, -1);
-      const callback = args[args.length - 1];
+['stat', 'readFile'].forEach((methodName) => {
+  FallbackFileSystem.prototype[methodName] = async function(...args) {
+    const beforeCallback = args.slice(0, -1);
+    const callback = args[args.length - 1];
 
-      for (let fs of this.fses) {
-        try {
-          let result = await Promise.promisify(fs[methodName], fs)(...beforeCallback);
-          return returnValue(callback, null, result);
-        } catch(e) {}
-      }
+    for (let fs of this.fses) {
+      try {
+        let result = await Promise.promisify(fs[methodName], fs)(...beforeCallback);
+        return returnValue(callback, null, result);
+      } catch(e) {}
+    }
 
-      return returnValue(
-        callback, 
-        `None of the fses could ${methodName}(${JSON.stringify(args)})`
-      );
-    };
-  });
+    return returnValue(
+      callback, 
+      `None of the fses could ${methodName}(${JSON.stringify(args)})`
+    );
+  };
+});
 
 module.exports = FallbackFileSystem;

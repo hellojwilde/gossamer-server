@@ -1,4 +1,4 @@
-const {normalizeFilePath} = require('./Paths');
+const {normalizeFilePath, getFilePathSegment} = require('./Paths');
 
 class CompositeFileSystem {  
   constructor(fileSystemConfigs) {
@@ -7,7 +7,7 @@ class CompositeFileSystem {
 
     (fileSystemConfigs || []).forEach(({folder, fs}) => {
       if (folder) {
-        this.overlays.push({folder: normalizeFilePath(folder), fs: fs});
+        this.overlays[folder] = fs;
       } else {
         this.base = fs;
       }
@@ -19,16 +19,14 @@ class CompositeFileSystem {
   }
 }
 
-['join', 'stat', 'readlink', 'readFile', 'createReadStream']
-  .forEach((methodName) => {
-    CompositeFileSystem.prototype[methodName] = function(filePath, ...rest) {
-      const normalizedFilePath = normalizeFilePath(filePath);
-      const fileSystem = this.overlays.reduce((picked, {folder, fs}) =>{
-        return normalizedFilePath.indexOf(folder) === 0 ? fs : picked;
-      }, this.base);
+['join', 'stat', 'readlink', 'readFile', 'createReadStream'].forEach((methodName) => {
+  CompositeFileSystem.prototype[methodName] = function(filePath, ...rest) {
+    const normalizedFilePath = normalizeFilePath(filePath);
+    const folder = getFilePathSegment(normalizedFilePath, 0);
+    const fileSystem = this.overlays[folder] || this.base;
 
-      return fileSystem[methodName](normalizedFilePath, ...rest);
-    };
-  });
+    return fileSystem[methodName](normalizedFilePath, ...rest);
+  };
+});
 
 module.exports = CompositeFileSystem;
