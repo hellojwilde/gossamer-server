@@ -37,8 +37,10 @@ async function webpackAsync(dir, inputFileSystem, outputFileSystem, options) {
 
   compiler.options = new WebpackOptionsApply().process(compiler.options, compiler);
 
-  // XXX We use the loaders that get installed with the server software, not the 
-  // ones specified in the repository, because loaders are loaded via require().
+  // XXX We use the loaders that get installed with gossamer-server, not the 
+  // ones specified in the gossamer branch we're fetching and building, because 
+  // loaders are loaded via require(). (And that doesn't work with buckets.)
+  // 
   // In theory Webpack will use the loader resolver for all of the loaders. 
   // However, after the loader is initially resolved with the loader resolver:
   // 
