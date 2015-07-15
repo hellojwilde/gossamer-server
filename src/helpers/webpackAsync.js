@@ -8,19 +8,16 @@ const RelativeNodeSourcePlugin = require("./RelativeNodeSourcePlugin");
 const WebpackCompiler = require('webpack/lib/Compiler');
 const WebpackOptionsApply = require('webpack/lib/WebpackOptionsApply');
 const WebpackOptionsDefaulter = require('webpack/lib/WebpackOptionsDefaulter');
-const CompositeFileSystem = require('../models/CompositeFileSystem');
+const FallbackFileSystem = require('../models/FallbackFileSystem');
 
 const path = require('path');
 
 async function webpackAsync(inputFileSystem, outputFileSystem, options) {
   const compiler = new WebpackCompiler();
-
-  console.log("COMPILE", path.dirname(process.cwd()))
-
-  const combinedInputFileSystem = new CachedInputFileSystem(new CompositeFileSystem([
-    {folder: path.dirname(process.cwd()), fs: new NodeJsInputFileSystem()},
-    {folder: null, fs: inputFileSystem}
-  ]), 60000);
+  const combinedInputFileSystem = new CachedInputFileSystem(
+    new FallbackFileSystem([inputFileSystem, new NodeJsInputFileSystem()]), 
+    60000
+  );
 
   new WebpackOptionsDefaulter().process(options);
 

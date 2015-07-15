@@ -1,8 +1,4 @@
-const {
-  normalizeFilePath, 
-  getFilePathSegment,
-  getFilePathSlice
-} = require('./Paths');
+const {normalizeFilePath} = require('./Paths');
 
 class CompositeFileSystem {  
   constructor(fileSystemConfigs) {
@@ -23,9 +19,7 @@ class CompositeFileSystem {
   }
 }
 
-// we only implement the read-only methods.
-
-['join', 'stat', 'readlink', 'readFile', 'createReadStream', 'readdir']
+['join', 'stat', 'readlink', 'readFile', 'createReadStream']
   .forEach((methodName) => {
     CompositeFileSystem.prototype[methodName] = function(filePath, ...rest) {
       const normalizedFilePath = normalizeFilePath(filePath);

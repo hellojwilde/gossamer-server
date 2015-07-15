@@ -117,10 +117,6 @@ const ShipInternalSteps = [
       const buffer = await fileSystem.readFile('webpack.config.js');
       const bucketId = 'webpack';
 
-      const config = getWebpackConfig(buffer);
-
-      console.log(config.module.loaders);
-
       const webpack = await webpackAsync(
         fileSystem, 
         new BucketFileSystem(this.models.bucket, bucketId),
