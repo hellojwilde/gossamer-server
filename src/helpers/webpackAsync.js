@@ -15,6 +15,8 @@ const path = require('path');
 async function webpackAsync(inputFileSystem, outputFileSystem, options) {
   const compiler = new WebpackCompiler();
 
+  console.log("COMPILE", path.dirname(process.cwd()))
+
   const combinedInputFileSystem = new CachedInputFileSystem(new CompositeFileSystem([
     {folder: path.dirname(process.cwd()), fs: new NodeJsInputFileSystem()},
     {folder: null, fs: inputFileSystem}
