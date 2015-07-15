@@ -20,9 +20,17 @@ async function webpackAsync(dir, inputFileSystem, outputFileSystem, options) {
 
   compiler.options = options;
   compiler.options.output.publicPath = '/my/.build/';
-  compiler.options.resolve.extensions = ['', '.js'];
 
-  // XXX The base directory of BucketFileSystem is '/'.
+  compiler.options.resolve.extensions = ['', '.js'];
+  compiler.options.resolve.modulesDirectories = ['node_modules'];
+  compiler.options.resolve.unsafeCache = true;
+
+  compiler.options.resolveLoader.extensions = ['', '.js'];
+  compiler.options.resolveLoader.modulesDirectories = ['node_modules'];
+  compiler.options.resolveLoader.moduleTemplates = ['*'];
+  compiler.options.resolveLoader.unsafeCache = true;
+
+  // The base directory of BucketFileSystem is '/'.
 
   compiler.options.context = '/';
   compiler.options.recordsPath = '/.build/records.json';
