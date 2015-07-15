@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 const emptyFunction = () => {};
 const returnValue = (callback, err, result) => {
   callback && callback(err, result);
@@ -23,11 +25,10 @@ class FallbackFileSystem {
       const beforeCallback = args.slice(0, -1);
       const callback = args[args.length - 1];
 
-      console.log('fbfs', methodName, beforeCallback)
-
-      for (let fs in this.fses) {
+      for (let fs of this.fses) {
         try {
-          return returnValue(callback, null, fs[methodName](...beforeCallback));
+          let result = await Promise.promisify(fs[methodName], fs)(...beforeCallback);
+          return returnValue(callback, null, result);
         } catch(e) {}
       }
 
