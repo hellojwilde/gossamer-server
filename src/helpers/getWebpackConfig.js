@@ -1,6 +1,7 @@
 const vm = require('vm');
 const mapValues = require('lodash.mapvalues');
 const webpack = require('webpack');
+const {normalizeFilePath} = require('../models/Paths');
 
 function getWebpackConfigStubPlugin(name) {
   class WebpackConfigStubPlugin {
@@ -15,9 +16,7 @@ function getWebpackConfigStubPlugin(name) {
 const WebpackConfigRequire = (name) => ({
   webpack: webpack,
   path: {
-    join: (...pieces) => pieces
-      .filter((piece) => piece && piece.length)
-      .join('/')
+    join: (...pieces) => normalizeFilePath(pieces.join('/'))
   }
 })[name];
 

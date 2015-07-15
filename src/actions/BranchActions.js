@@ -116,17 +116,22 @@ const ShipInternalSteps = [
     action: async function(context, fileSystem) {
       const buffer = await fileSystem.readFile('webpack.config.js');
       const bucketId = 'webpack';
+
+      const config = getWebpackConfig(buffer);
+
+      console.log(config.module.loaders);
+
       const webpack = await webpackAsync(
         fileSystem, 
         new BucketFileSystem(this.models.bucket, bucketId),
         getWebpackConfig(buffer)
       );
 
-      console.log(webpack.toString({modules: true, chunks: false}));
+      console.log(webpack.toString({modules: false, chunks: true}));
 
       return {
         buckets: [{folder: '.build', bucketId: bucketId}], 
-        webpack: webpack.toString({modules: true, chunks: false})
+        webpack: webpack.toString({modules: false, chunks: true})
       };
     }
   }

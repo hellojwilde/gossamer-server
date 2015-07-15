@@ -19,7 +19,7 @@ async function fetchNodePackages(configFileBuffer, bucketFileSystem) {
   await Promise.promisify(npm.commands.install)();
   await Promise.each(readdirRecursiveAsync(modulesPath), (filePath) => {
     return new Promise((resolve, reject) => {
-      const bucketFilePath = path.relative(modulesPath, filePath);
+      const bucketFilePath = path.relative(prefix, filePath);
       const bucketWriteStream = bucketFileSystem.createWriteStream(bucketFilePath);
 
       bucketWriteStream.on('finish', resolve);
