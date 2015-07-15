@@ -9,11 +9,14 @@ const WebpackCompiler = require('webpack/lib/Compiler');
 const WebpackOptionsApply = require('webpack/lib/WebpackOptionsApply');
 const WebpackOptionsDefaulter = require('webpack/lib/WebpackOptionsDefaulter');
 const FallbackFileSystem = require('../models/FallbackFileSystem');
+// const CachePlugin = require('webpack/lib/CachePlugin');
 
 const path = require('path');
 const getNodeSourceResolutions = require('./getNodeSourceResolutions');
 
-async function webpackAsync(dir, inputFileSystem, outputFileSystem, options) {
+// let CACHE = {};
+
+async function webpackAsync(dir, inputFileSystem, outputFileSystem, options={}, fileTimestamps={}) {
   const compiler = new WebpackCompiler();
 
   new WebpackOptionsDefaulter().process(options);
@@ -111,7 +114,23 @@ async function webpackAsync(dir, inputFileSystem, outputFileSystem, options) {
   compiler.applyPlugins('environment');
   compiler.applyPlugins('after-environment');
 
-  return await Promise.promisify(compiler.run, compiler)();
+  // if (CACHE) {
+  //   compiler.apply(new CachePlugin(CACHE));
+  // }
+
+  compiler.fileTimestamps = fileTimestamps;
+
+
+  //   compiler.plugin('after-emit', function(compilation, callback) {
+  //     CACHE = compilation.cache;
+  //   callback();
+  // })
+
+
+  let stats = await Promise.promisify(compiler.run, compiler)();
+
+
+  return stats;
 }
 
 module.exports = webpackAsync;

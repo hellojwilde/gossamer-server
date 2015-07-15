@@ -7,6 +7,7 @@ const Stats = require('webpack/lib/Stats');
 const fetchGitHubArchive = require('../helpers/fetchGitHubArchive');
 const fetchNodePackages = require('../helpers/fetchNodePackages');
 const getWebpackConfig = require('../helpers/getWebpackConfig');
+const getWebpackTimestamps = require('../helpers/getWebpackTimestamps');
 const objectHash = require('json-hash');
 const now = require('performance-now');
 const merge = require('lodash.merge');
@@ -113,20 +114,43 @@ const ShipInternalSteps = [
   
   {
     name: 'webpack',
-    action: async function(context, fileSystem) {
+    action: async function(context, fileSystem, prevContext) {
       const buffer = await fileSystem.readFile('webpack.config.js');
       const bucketId = 'webpack';
+      const bucketFolder = {folder: '.build', bucketId: bucketId};
+      const bucketsWithWebpack = context.buckets.concat(bucketFolder);
+
+      const getCompositeBucketDigests = async (buckets) => {
+        let maps = await Promise.map(
+          buckets,
+          ({bucketId}) => this.models.bucket.getAllFileDigests(bucketId)
+        );
+        return Object.assign({}, ...maps);
+      }
+
+      let fileTimestamps = {};
+
+      if (prevContext.buckets && prevContext.buckets.length > 0) {
+        let [prevMap, map] = await Promise.all([
+          getCompositeBucketDigests(prevContext.buckets),
+          getCompositeBucketDigests(bucketsWithWebpack)
+        ]);
+
+        fileTimestamps = getWebpackTimestamps(prevMap, map);
+        console.log('TIMESTAMP', fileTimestamps)
+      }
 
       const webpack = await webpackAsync(
         this.dir,
-        fileSystem, 
+        new CompositeBucketFileSystem(this.models.bucket, bucketsWithWebpack), 
         new BucketFileSystem(this.models.bucket, bucketId),
-        getWebpackConfig(buffer)
+        getWebpackConfig(buffer),
+        fileTimestamps
       );
 
       console.log(webpack.toString({modules: false, chunks: false}));
 
-      return {buckets: [{folder: '.build', bucketId: bucketId}]};
+      return {buckets: [bucketFolder]};
     }
   }
 ];
@@ -142,26 +166,28 @@ async function enqueueShip(branchId) {
 async function ship(branchId) {
   await this.models.branch.putLockStatus(branchId, 'Shipping');
 
-  let ctx = {branchId: branchId, buckets: [{folder: '.build', bucketId: 'webpack'}], performance: []};
+  let context = {branchId: branchId, buckets: [], performance: []};
+  let prevContext = await this.models.branch.getLatestBuild(branchId);
+  prevContext = prevContext || {};
 
   await Promise.each(ShipInternalSteps, async ({name, action}) => {
     console.log('Step: ' + name);
 
     const start = now();
-    const fileSystem = new CompositeBucketFileSystem(this.models.bucket, ctx.buckets);
-    const newCtx = await action.call(this, ctx, fileSystem);
-    const newCtxWithPerf = Object.assign({}, newCtx, {
+    const fileSystem = new CompositeBucketFileSystem(this.models.bucket, context.buckets);
+    const newContext = await action.call(this, context, fileSystem, prevContext);
+    const newContextWithPerf = Object.assign({}, newContext, {
       performance: [{name: name, time: now() - start}]
     });
 
-    merge(ctx, newCtxWithPerf, (a, b) => {
+    merge(context, newContextWithPerf, (a, b) => {
       if (Array.isArray(a)) {
         return a.concat(b);
       }
     });
   });
 
-  await this.models.branch.putBuild(branchId, ctx);
+  await this.models.branch.putBuild(branchId, context);
   await this.models.branch.delLock(branchId);
 }
 

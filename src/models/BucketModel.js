@@ -101,6 +101,10 @@ class BucketModel {
     return results;
   }
 
+  getAllFileDigests(bucketId) {
+    return this.redis.hgetall(getKey('bucket', bucketId));
+  }
+
   createWriteStream(bucketId, filePath) {
     let stream = this.blob.createWriteStream();
 
