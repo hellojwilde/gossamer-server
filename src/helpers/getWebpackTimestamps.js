@@ -1,11 +1,11 @@
-function addMapToSet(set, map) {
+function addMapKeysToSet(set, map) {
   Object.keys(map).forEach((key) => set.add(key));
 }
 
 function getWebpackTimestamps(oldFileMap, newFileMap) {
   let keys = new Set();
-  addMapToSet(keys, oldFileMap);
-  addMapToSet(keys, newFileMap);
+  addMapKeysToSet(keys, oldFileMap);
+  addMapKeysToSet(keys, newFileMap);
 
   let timestamps = {};
   for (let key of keys.values()) {

@@ -2,7 +2,6 @@ let cookieParser = require('cookie-parser');
 let express = require('express');
 let favicon = require('serve-favicon');
 let forceSecure = require('express-force-ssl');
-let moment = require('moment');
 let passport = require('passport');
 let path = require('path');
 let session = require('express-session');
@@ -36,8 +35,8 @@ function web(registry) {
 
   // view engine setup
   server.set('views', path.join(__dirname, 'views'));
-  server.set('view engine', 'jade');
-  server.locals.moment = moment;
+  server.set('view engine', 'jsx');
+  server.engine('jsx', require('express-react-views').createEngine());
 
   // uncomment after placing your favicon in /public
   //server.use(favicon(__dirname + '/public/favicon.ico'));

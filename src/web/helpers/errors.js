@@ -10,7 +10,7 @@ function errors(dev) {
 
     handleError: function(err, req, res, next) {
       res.status(err.status || 500);
-      renderWithDefaults(req, res, 'error', {
+      renderWithDefaults(req, res, 'ErrorPage', {
         message: err.message,
         error: dev ? err : {}
       });

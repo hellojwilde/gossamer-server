@@ -11,7 +11,7 @@ let routes = new Routes();
 
 routes.get('/', async function(req, res) {
   if (!req.isAuthenticated()) {
-    renderWithDefaults(req, res, 'login-index');
+    renderWithDefaults(req, res, 'IndexLoginPage');
     return;
   }
 
@@ -21,7 +21,7 @@ routes.get('/', async function(req, res) {
     recent: this.models.branch.getAllWithBuilds()
   });
 
-  renderWithDefaults(req, res, 'index', props);
+  renderWithDefaults(req, res, 'IndexPage', props);
 });
 
 routes.post('/branch/:branchId/ship', ensureVouched, async function(req, res) {

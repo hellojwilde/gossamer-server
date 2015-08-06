@@ -140,7 +140,6 @@ const ShipInternalSteps = [
         ]);
 
         fileTimestamps = getWebpackTimestamps(prevMap, map);
-        console.log('TIMESTAMP', fileTimestamps)
       }
 
       const webpack = await webpackAsync(
