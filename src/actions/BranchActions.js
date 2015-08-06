@@ -120,6 +120,9 @@ const ShipInternalSteps = [
       const bucketFolder = {folder: '.build', bucketId: bucketId};
       const bucketsWithWebpack = context.buckets.concat(bucketFolder);
 
+      // diff the previous build of the application with the current version
+      // and generate file timestamps accordingly.
+
       const getCompositeBucketDigests = async (buckets) => {
         let maps = await Promise.map(
           buckets,
