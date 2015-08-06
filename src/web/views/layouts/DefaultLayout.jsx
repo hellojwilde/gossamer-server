@@ -58,7 +58,7 @@ const DefaultLayout = React.createClass({
           <title>{this.props.title}</title>
           <meta charset="utf-8"/>
 
-          <link rel="stylesheet" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"/>
+          <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"/>
           <link rel="stylesheet" href="/stylesheets/bootstrap.css"/>
           <link rel="stylesheet" href="/stylesheets/style.css"/>
         </head>
