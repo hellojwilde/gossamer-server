@@ -6,30 +6,34 @@ const IndexLoginPage = React.createClass({
   render: function() {
     return (
       <ModalLayout {...this.props}>
-          <h2>
-            Gossamer
-          </h2>
-          <p className="lead">
-            An experimental branch of <a href="https://github.com/mozilla/browser.html">browser.html</a>,
-            focusing on collaborative development.
-          </p>
-          <p>
-            If you're a <a href="https://mozillians.org/en-US/">vouched Mozillian</a>, 
-            you can fork <a href="https://github.com/hellojwilde/gossamer">the browser on GitHub</a>{' '}
-            and make experimental changes.
-          </p>
-          <p>
-            Others can try your branch and receive updates.
-          </p>
-          <p>
-            In many cases, switching branches and applying updates is restartless, without any extra work on your part.
-          </p>
-          <hr/>
-          <p>
-            <a href="#" className="btn btn-lg btn-primary btn-defau;t btn-block">
-              Download Gossamer for OS X
-            </a>
-          </p>
+        <h1>
+          An experimental browser
+          focusing on collaborative development.
+        </h1>
+
+        <p>
+        <div className="embed-responsive embed-responsive-16by9">
+          <iframe 
+            className="embed-responsive-item"
+            src="https://www.youtube.com/embed/faWPkOBiWJA?controls=0&showinfo=0&rel=0" 
+            frameBorder={0} 
+            allowfullscreen>
+          </iframe>
+        </div>
+        </p>
+
+        <p className="lead">
+          If you're a <a href="https://mozillians.org/en-US/">vouched Mozillian</a>, 
+          you can fork <a href="https://github.com/hellojwilde/gossamer">the browser on GitHub</a>{' '}
+          and make experimental changes. Users can try your branch and receive 
+          updates, <em>usually without a restart or reload</em>.
+        </p>
+        <p>
+          <a href="#" className="disabled btn btn-lg btn-primary btn-defau;t btn-block">
+            Download Gossamer for OS X
+          </a>
+          <small>We'll have the download link up shortly!</small>
+        </p>
       </ModalLayout>
     );
   }

@@ -14,21 +14,28 @@
   max-width: 920px;
 }
 
-.vertical-center {
-  width: 100%;
-  height: 100%;
-  display: table;
+@media(max-height:  699px) {
+  .vertical-center {
+    margin: 50px 0;
+  }
 }
 
-.vertical-center-inner {
-  display: table-cell;
-  vertical-align: middle;
+@media(min-height:  700px) {
+  .vertical-center {
+    width: 100%;
+    height: 100%;
+    display: table;
+  }
+
+  .vertical-center-inner {
+    display: table-cell;
+    vertical-align: middle;
+  }
 }
 
-.navbar-inverse li,
-.navbar-inverse.navbar li a,
-.navbar-inverse.navbar a.navbar-brand {
-  color: white;
+.navbar {
+  background: white;
+  border-bottom: 1px solid #f9f9f9;
 }
 
 .navbar-user {

@@ -13,7 +13,7 @@ const ModalLayout = React.createClass({
             <div className="vertical-center-inner">
               <div className="container">
                 <div className="row">
-                  <div className="col-sm-6 col-sm-offset-3">
+                  <div className="col-sm-8 col-sm-offset-2">
                     {children}
                   </div>
                 </div>

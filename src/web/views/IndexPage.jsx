@@ -94,11 +94,11 @@ const IndexPage = React.createClass({
             <thead>
               <tr>
                 <th>Branch</th>
-                <th colspan="4">Last Shipment</th>
+                <th colSpan={4}>Last Shipment</th>
               </tr>
             </thead>
             <tbody>
-              <BranchTableRow isVouched={this.props.isVouched} branch={this.props.base} isBase={true}/>
+              <BranchTableRow isVouched={this.props.isVouched} branch={this.props.base} key="base" isBase={true}/>
               {this.props.recent.map((branch) => (
                 (branch.branchId !== this.props.base.branchId) &&
                 <BranchTableRow isVouched={this.props.isVouched} branch={branch} key={branch.branchId}/>

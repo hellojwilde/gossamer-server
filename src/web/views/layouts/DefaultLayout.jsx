@@ -58,6 +58,7 @@ const DefaultLayout = React.createClass({
           <title>{this.props.title}</title>
           <meta charset="utf-8"/>
 
+          <link rel="stylesheet" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"/>
           <link rel="stylesheet" href="/stylesheets/bootstrap.css"/>
           <link rel="stylesheet" href="/stylesheets/style.css"/>
         </head>
@@ -77,7 +78,7 @@ const DefaultLayout = React.createClass({
                   <span className="icon-bar"/>
                 </button>
                 <a href="/" className="navbar-brand">
-                  Gossamer
+                  <span className="ion-erlenmeyer-flask"/> Gossamer
                 </a>
               </div>
 
