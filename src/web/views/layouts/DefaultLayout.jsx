@@ -14,18 +14,18 @@ const NavbarUserMenu = React.createClass({
             <span className="navbar-user-name">
               {this.props.profile.displayName}
             </span>
+            {this.props.isVouched && (
+              <span className="navbar-user-voucher">
+                <span
+                  className="glyphicon glyphicon-ok-sign"
+                  data-toggle="tooltip"
+                  data-placement="bottom"
+                  title="Verified Mozillian"
+                />
+              </span>
+            )}
           </a>
         </li>
-        {this.props.isVouched && (
-          <li className="navbar-user-voucher">
-            <span
-              className="glyphicon glyphicon-ok-sign"
-              data-toggle="tooltip"
-              data-placement="bottom"
-              title="Verified Mozillian"
-            />
-          </li>
-        )}
         <li>
           <a href="/user/logout">
             Log out
