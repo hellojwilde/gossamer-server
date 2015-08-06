@@ -15,7 +15,7 @@ const IndexLoginPage = React.createClass({
         <div className="embed-responsive embed-responsive-16by9">
           <iframe 
             className="embed-responsive-item"
-            src="https://www.youtube.com/embed/faWPkOBiWJA?controls=0&showinfo=0&rel=0" 
+            src="https://www.youtube.com/embed/faWPkOBiWJA?showinfo=0&rel=0" 
             frameBorder={0} 
             allowfullscreen>
           </iframe>
