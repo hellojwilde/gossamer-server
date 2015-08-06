@@ -30,9 +30,14 @@ const IndexLoginPage = React.createClass({
         </p>
         <p>
           <a href="#" className="disabled btn btn-lg btn-primary btn-defau;t btn-block">
-            Download Gossamer for OS X
+            Download Gossamer for OS X{' '}
+            <span className="label">Coming Soon</span>
           </a>
-          <small>We'll have the download link up shortly!</small>
+        </p>
+
+        <p>
+          A <a href="https://twitter.com/captaincalliope">Lyre Calliope</a> and{' '}
+          <a href="https://twitter.com/hellojwilde">Jonathan Wilde</a> shindig.
         </p>
       </ModalLayout>
     );
