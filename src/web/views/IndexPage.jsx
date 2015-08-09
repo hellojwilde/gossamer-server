@@ -24,7 +24,7 @@ const BranchTableRow = React.createClass({
         {duration.toFixed(2) + ' seconds'}
       </td>,
 
-      <td>
+      <td key="commit-timestamp">
         {branch.latest.timestamp && moment.unix(branch.latest.timestamp).fromNow()}
       </td>
     ];
@@ -52,9 +52,9 @@ const BranchTableRow = React.createClass({
     } else {
       return isVouched && (
         <td>
-        <form method="post" action={'/branch/' + branch.branchId + '/ship'}>
-          <input className="btn btn-default btn-primary btn-xs" type="submit" value="Ship"/>
-        </form>
+          <form method="post" action={'/branch/' + branch.branchId + '/ship'}>
+            <input className="btn btn-default btn-primary btn-xs" type="submit" value="Ship"/>
+          </form>
         </td>
       );
     }

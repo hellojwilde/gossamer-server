@@ -24,8 +24,8 @@ const IndexLoginPage = React.createClass({
 
         <p className="lead">
           If you're a <a href="https://mozillians.org/en-US/">vouched Mozillian</a>, 
-          you can fork <a href="https://github.com/hellojwilde/gossamer">the browser on GitHub</a>{' '}
-          and make experimental changes. Users can try your branch and receive 
+          you can submit experimental changes by forking <a href="https://github.com/hellojwilde/gossamer">the browser on GitHub</a>.{' '}
+          Users can try your branch and receive 
           updates, <em>usually without a restart or reload</em>.
         </p>
         <p>

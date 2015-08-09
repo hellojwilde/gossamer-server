@@ -152,7 +152,7 @@ const ShipInternalSteps = [
 
       console.log(webpack.toString({modules: false, chunks: false}));
 
-      return {buckets: [bucketFolder]};
+      return {buckets: [bucketFolder], webpackJson: webpack.toJson()};
     }
   }
 ];
