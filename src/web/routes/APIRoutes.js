@@ -52,7 +52,8 @@ routes.post('/my', ensureAPIAuthenticated, async function(req, res) {
 
   sendAPISuccess(res, {
     isAuthenticated: req.isAuthenticated(),
-    branchId: req.params.branchId
+    branchId: req.params.branchId,
+    baseBranchId: this.config.base
   })
 });
 
