@@ -146,7 +146,11 @@ const ShipInternalSteps = [
         this.dir,
         new CompositeBucketFileSystem(this.models.bucket, bucketsWithWebpack), 
         new BucketFileSystem(this.models.bucket, bucketId),
-        getWebpackConfig(buffer),
+        getWebpackConfig(
+          buffer, 
+          this.config.publicUrl, 
+          [context.branchId, context.buildId].join('/')
+        ),
         fileTimestamps
       );
 
@@ -168,9 +172,16 @@ async function enqueueShip(branchId) {
 async function ship(branchId) {
   await this.models.branch.putLockStatus(branchId, 'Shipping');
 
-  let context = {branchId: branchId, buckets: [], performance: []};
+  let prevBuildId = await this.models.branch.getLatestBuildId(branchId);
   let prevContext = await this.models.branch.getLatestBuild(branchId);
   prevContext = prevContext || {};
+
+  let context = {
+    branchId: branchId, 
+    buildId: prevBuildId + 1,
+    buckets: [], 
+    performance: []
+  };
 
   await Promise.each(ShipInternalSteps, async ({name, action}) => {
     console.log('Step: ' + name);

@@ -18,10 +18,16 @@ const WebpackConfigContext = {
   module: {}
 };
 
-function getWebpackConfig(buffer) {
-  let ctx = Object.assign({}, WebpackConfigContext);
+function getWebpackConfig(buffer, host, buildId) {
+  let ctx = Object.assign({}, WebpackConfigContext, {
+    process: {env: {
+      GOSSAMER_HOST: host,
+      GOSSAMER_BUILD_ID: buildId
+    }}
+  });
+
   vm.runInNewContext(buffer.toString(), ctx);
-  return  ctx.module.exports;
+  return ctx.module.exports;
 }
 
 module.exports = getWebpackConfig;

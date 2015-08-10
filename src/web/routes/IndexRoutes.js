@@ -24,6 +24,16 @@ routes.get('/', async function(req, res) {
   renderWithDefaults(req, res, 'IndexPage', props);
 });
 
+routes.get('/branch/:branchId/json', async function(req, res) {
+  let latest = await this.models.branch.getLatestBuild(req.params.branchId);
+
+  if (latest && latest.webpackJson) {
+    res.json(latest.webpackJson);
+  } else {
+    res.status(404).end();
+  }
+});
+
 routes.post('/branch/:branchId/ship', ensureVouched, async function(req, res) {
   await this.actions.branch.enqueueShip(req.params.branchId);
   res.redirect('/');
